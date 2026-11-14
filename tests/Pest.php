@@ -1,6 +1,9 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Monolog\Handler\NullHandler;
+use Monolog\Handler\TestHandler;
 use Tests\TestCase;
 
 /*
@@ -20,6 +23,18 @@ pest()->extend(TestCase::class)
 
 pest()->extend(TestCase::class)
     ->in('Integration');
+
+/*
+ * Os canais de log de messaging escrevem em storage/logs/messaging/. Nos testes
+ * eles descartam tudo, para que a execução da suíte não polua os logs reais.
+ * Os testes que verificam logs trocam o canal por um handler em memória
+ * (fakeLogChannel).
+ */
+pest()->beforeEach(function () {
+    foreach (['messaging_publisher', 'messaging_topology'] as $channel) {
+        config(["logging.channels.{$channel}" => ['driver' => 'monolog', 'handler' => NullHandler::class]]);
+    }
+})->in('Feature', 'Integration');
 
 /*
 |--------------------------------------------------------------------------
@@ -50,4 +65,17 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Troca o canal de log informado por um handler em memória e o devolve, para
+ * que o teste confirme em qual canal um registro foi escrito.
+ */
+function fakeLogChannel(string $channel): TestHandler
+{
+    config(["logging.channels.{$channel}" => ['driver' => 'monolog', 'handler' => TestHandler::class]]);
+    Log::forgetChannel($channel);
+
+    /** @var TestHandler */
+    return Log::channel($channel)->getLogger()->getHandlers()[0];
 }

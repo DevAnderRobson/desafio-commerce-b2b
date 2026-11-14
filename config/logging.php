@@ -126,6 +126,27 @@ return [
             'replace_placeholders' => true,
         ],
 
+        /*
+        | Canais exclusivos do módulo app/Messaging (pub/sub). Cada área escreve em
+        | seu próprio arquivo diário em storage/logs/messaging/, sem se misturar ao
+        | laravel.log. Os nomes estão em App\Messaging\Support\MessagingLog.
+        */
+        'messaging_publisher' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/messaging/publisher.log'),
+            'level' => env('LOG_MESSAGING_LEVEL', 'debug'),
+            'max_files' => env('LOG_MESSAGING_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
+        'messaging_topology' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/messaging/topology.log'),
+            'level' => env('LOG_MESSAGING_LEVEL', 'debug'),
+            'max_files' => env('LOG_MESSAGING_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
         'null' => [
             'driver' => 'monolog',
             'handler' => NullHandler::class,
