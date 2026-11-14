@@ -17,10 +17,12 @@ final class TopologyPlanner
     private const array EXCHANGE_TYPES = ['direct', 'topic', 'fanout', 'headers'];
 
     /**
-     * @param  array{exchanges?: array<string, string>, internal_queues?: list<string>, consumer_queues?: array<string, list<array{exchange: string, routing_key: string}>>}  $topology
+     * @param  array{exchanges?: array<string, string>, internal_queues?: list<string>}  $topology
+     * @param  array<string, array{exchange: string, handlers: array<string, string>}>  $consumers
      */
     public function __construct(
         #[Config('messaging.topology')] private readonly array $topology,
+        #[Config('messaging.consumers')] private readonly array $consumers,
         #[Config('queue.connections.rabbitmq.options.queue.failed_exchange')] private readonly string $failedExchange,
         #[Config('queue.connections.rabbitmq.options.queue.failed_routing_key')] private readonly string $failedRoutingKey,
     ) {}
@@ -47,21 +49,21 @@ final class TopologyPlanner
             $queues[$deadLetter] = new QueueDefinition($deadLetter);
         }
 
-        foreach ($this->topology['consumer_queues'] ?? [] as $queue => $queueBindings) {
+        foreach ($this->consumers as $queue => $consumer) {
+            if (! isset($exchanges[$consumer['exchange']])) {
+                throw new InvalidArgumentException(sprintf(
+                    'A fila consumidora "%s" liga-se à exchange "%s", que não está em messaging.topology.exchanges.',
+                    $queue,
+                    $consumer['exchange'],
+                ));
+            }
+
             $deadLetter = $this->deadLetterQueueFor($queue);
             $queues[$deadLetter] = new QueueDefinition($deadLetter);
             $queues[$queue] = new QueueDefinition($queue, $this->failedExchange, $deadLetter);
 
-            foreach ($queueBindings as $binding) {
-                if (! isset($exchanges[$binding['exchange']])) {
-                    throw new InvalidArgumentException(sprintf(
-                        'A fila "%s" liga-se à exchange "%s", que não está em messaging.topology.exchanges.',
-                        $queue,
-                        $binding['exchange'],
-                    ));
-                }
-
-                $bindings[] = new BindingDefinition($queue, $binding['exchange'], $binding['routing_key']);
+            foreach (array_keys($consumer['handlers']) as $routingKey) {
+                $bindings[] = new BindingDefinition($queue, $consumer['exchange'], $routingKey);
             }
         }
 

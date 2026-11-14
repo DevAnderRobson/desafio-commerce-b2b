@@ -21,19 +21,23 @@ final class RabbitMqConnectionFactory
     public function __construct(#[Config('messaging.connection')] private readonly array $config) {}
 
     /**
+     * @param  array{heartbeat?: int, read_write_timeout?: float}  $overrides  ajustes para conexões de longa duração, como a do consumidor
+     *
      * @throws AMQPExceptionInterface|Exception
      */
-    public function open(): AMQPStreamConnection
+    public function open(array $overrides = []): AMQPStreamConnection
     {
+        $config = [...$this->config, ...$overrides];
+
         return new AMQPStreamConnection(
-            host: $this->config['host'],
-            port: $this->config['port'],
-            user: $this->config['user'],
-            password: $this->config['password'],
-            vhost: $this->config['vhost'],
-            connection_timeout: $this->config['connection_timeout'],
-            read_write_timeout: $this->config['read_write_timeout'],
-            heartbeat: $this->config['heartbeat'],
+            host: $config['host'],
+            port: $config['port'],
+            user: $config['user'],
+            password: $config['password'],
+            vhost: $config['vhost'],
+            connection_timeout: $config['connection_timeout'],
+            read_write_timeout: $config['read_write_timeout'],
+            heartbeat: $config['heartbeat'],
         );
     }
 }

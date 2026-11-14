@@ -4,6 +4,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\TestHandler;
+use Tests\Fixtures\Messaging\RecordingEventHandler;
 use Tests\TestCase;
 
 /*
@@ -31,7 +32,7 @@ pest()->extend(TestCase::class)
  * (fakeLogChannel).
  */
 pest()->beforeEach(function () {
-    foreach (['messaging_publisher', 'messaging_topology'] as $channel) {
+    foreach (['messaging_publisher', 'messaging_topology', 'messaging_consumer'] as $channel) {
         config(["logging.channels.{$channel}" => ['driver' => 'monolog', 'handler' => NullHandler::class]]);
     }
 })->in('Feature', 'Integration');
@@ -65,6 +66,35 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Corpo JSON de um evento de integração recebido de outro sistema. Passar `null`
+ * em uma chave a invalida (equivale a ausente).
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function incomingEventBody(array $overrides = []): string
+{
+    return json_encode([
+        'id' => 'b6f5f6d8-0c1e-4c52-9d0c-4f3b7a2b9e10',
+        'event' => 'delivery.status_updated',
+        'version' => 1,
+        'occurred_at' => '2026-11-14T10:00:00Z',
+        'data' => ['delivery_id' => 7, 'status' => 'in_transit'],
+        ...$overrides,
+    ], JSON_THROW_ON_ERROR);
+}
+
+/**
+ * Registra no container um `RecordingEventHandler` único e o devolve.
+ */
+function recordingHandler(): RecordingEventHandler
+{
+    $handler = new RecordingEventHandler;
+    app()->instance(RecordingEventHandler::class, $handler);
+
+    return $handler;
 }
 
 /**

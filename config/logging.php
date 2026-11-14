@@ -147,6 +147,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'messaging_consumer' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/messaging/consumer.log'),
+            'level' => env('LOG_MESSAGING_LEVEL', 'debug'),
+            'max_files' => env('LOG_MESSAGING_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
         'null' => [
             'driver' => 'monolog',
             'handler' => NullHandler::class,

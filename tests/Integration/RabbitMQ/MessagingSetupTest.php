@@ -1,5 +1,6 @@
 <?php
 
+use App\Messaging\Handlers\LogIncomingEventHandler;
 use App\Messaging\RabbitMq\RabbitMqConnectionFactory;
 use Illuminate\Support\Str;
 use PhpAmqpLib\Channel\AMQPChannel;
@@ -25,13 +26,18 @@ beforeEach(function () {
     $this->internalQueue = "teste_interna_{$suffix}";
     $this->consumerQueue = "teste_consumidora_{$suffix}";
 
-    config(['messaging.topology' => [
-        'exchanges' => [$this->exchange => 'topic'],
-        'internal_queues' => [$this->internalQueue],
-        'consumer_queues' => [
-            $this->consumerQueue => [['exchange' => $this->exchange, 'routing_key' => 'order.*']],
+    config([
+        'messaging.topology' => [
+            'exchanges' => [$this->exchange => 'topic'],
+            'internal_queues' => [$this->internalQueue],
         ],
-    ]]);
+        'messaging.consumers' => [
+            $this->consumerQueue => [
+                'exchange' => $this->exchange,
+                'handlers' => ['order.created' => LogIncomingEventHandler::class],
+            ],
+        ],
+    ]);
 
     /** @var AMQPStreamConnection $connection */
     $connection = app(RabbitMqConnectionFactory::class)->open();

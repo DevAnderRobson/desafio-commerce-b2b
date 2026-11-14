@@ -1,11 +1,12 @@
 <?php
 
+use App\Messaging\Handlers\LogIncomingEventHandler;
 use App\Messaging\Topology\BindingDefinition;
 use App\Messaging\Topology\TopologyPlanner;
 
-function plannerFor(array $topology, string $failedExchange = '', string $failedRoutingKey = '%s_dlq'): TopologyPlanner
+function plannerFor(array $topology, array $consumers = [], string $failedExchange = '', string $failedRoutingKey = '%s_dlq'): TopologyPlanner
 {
-    return new TopologyPlanner($topology, $failedExchange, $failedRoutingKey);
+    return new TopologyPlanner($topology, $consumers, $failedExchange, $failedRoutingKey);
 }
 
 test('declares only the dead letter queue of internal queues, leaving the main queue to the queue driver', function () {
@@ -15,16 +16,17 @@ test('declares only the dead letter queue of internal queues, leaving the main q
         ->and($plan->queues[0]->arguments())->toBe([]);
 });
 
-test('declares a consumer queue with its dead letter queue and bindings', function () {
-    $plan = plannerFor([
-        'exchanges' => ['billing' => 'topic'],
-        'consumer_queues' => [
-            'ecommerce.billing' => [
-                ['exchange' => 'billing', 'routing_key' => 'invoice.issued'],
-                ['exchange' => 'billing', 'routing_key' => 'invoice.cancelled'],
+test('declares a consumer queue with its dead letter queue and one binding per handled event', function () {
+    $plan = plannerFor(
+        ['exchanges' => ['billing' => 'topic']],
+        ['ecommerce.billing' => [
+            'exchange' => 'billing',
+            'handlers' => [
+                'invoice.issued' => LogIncomingEventHandler::class,
+                'invoice.cancelled' => LogIncomingEventHandler::class,
             ],
-        ],
-    ])->plan();
+        ]],
+    )->plan();
 
     expect(collect($plan->queues)->pluck('name')->all())->toBe(['ecommerce.billing_dlq', 'ecommerce.billing'])
         ->and($plan->queues[1]->arguments())->toBe([
@@ -38,11 +40,10 @@ test('declares a consumer queue with its dead letter queue and bindings', functi
 });
 
 test('declares the dead letter queues before the queues that point to them', function () {
-    $plan = plannerFor([
-        'exchanges' => ['billing' => 'topic'],
-        'internal_queues' => ['default'],
-        'consumer_queues' => ['ecommerce.billing' => [['exchange' => 'billing', 'routing_key' => '#']]],
-    ])->plan();
+    $plan = plannerFor(
+        ['exchanges' => ['billing' => 'topic'], 'internal_queues' => ['default']],
+        ['ecommerce.billing' => ['exchange' => 'billing', 'handlers' => ['invoice.issued' => LogIncomingEventHandler::class]]],
+    )->plan();
 
     expect(collect($plan->queues)->pluck('name')->all())
         ->toBe(['default_dlq', 'ecommerce.billing_dlq', 'ecommerce.billing']);
@@ -61,14 +62,14 @@ test('declares the configured exchanges with their types', function () {
         ->toBe(['orders' => 'topic', 'stock' => 'fanout']);
 });
 
-test('rejects an invalid configuration', function (array $topology, string $failedExchange, string $message) {
-    plannerFor($topology, $failedExchange)->plan();
+test('rejects an invalid configuration', function (array $topology, array $consumers, string $failedExchange) {
+    plannerFor($topology, $consumers, $failedExchange)->plan();
 })->throws(InvalidArgumentException::class)->with([
-    'unknown exchange type' => [['exchanges' => ['orders' => 'inexistente']], '', 'Tipo de exchange inválido'],
-    'binding to an undeclared exchange' => [
-        ['consumer_queues' => ['fila' => [['exchange' => 'fantasma', 'routing_key' => '#']]]],
+    'unknown exchange type' => [['exchanges' => ['orders' => 'inexistente']], [], ''],
+    'consumer bound to an undeclared exchange' => [
+        [],
+        ['fila' => ['exchange' => 'fantasma', 'handlers' => ['a.b' => LogIncomingEventHandler::class]]],
         '',
-        'não está em messaging.topology.exchanges',
     ],
-    'custom failed exchange' => [['internal_queues' => ['default']], 'dlx', 'exchange padrão'],
+    'custom failed exchange' => [['internal_queues' => ['default']], [], 'dlx'],
 ]);

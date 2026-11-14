@@ -17,7 +17,8 @@
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
         "php-amqplib/php-amqplib": "^3.7.5",
-        "vladimir-yuldashev/laravel-queue-rabbitmq": "^15.0"
+        "vladimir-yuldashev/laravel-queue-rabbitmq": "^15.0",
+        "ext-pcntl": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",
