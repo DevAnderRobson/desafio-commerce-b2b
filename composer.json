@@ -15,7 +15,8 @@
         "laravel/fortify": "^1.37.2",
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0",
-        "laravel/wayfinder": "^0.1.14"
+        "laravel/wayfinder": "^0.1.14",
+        "vladimir-yuldashev/laravel-queue-rabbitmq": "^15.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",
@@ -94,6 +95,10 @@
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ],
+        "dev-sail": [
+            "sail up -d",
+            "sail npx concurrently -c \"#93c5fd,#c4b5fd,#34d399,#fb7185\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"php artisan reverb:start\" \"yarn dev\" --names=\"queue,logs,reverb,vite\""
         ]
     },
     "extra": {

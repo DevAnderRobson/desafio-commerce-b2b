@@ -1,5 +1,8 @@
 <?php
 
+use App\Queue\Jobs\RabbitMQJob;
+use PhpAmqpLib\Connection\AMQPLazyConnection;
+
 return [
 
     /*
@@ -89,6 +92,31 @@ return [
             ],
         ],
 
+        'rabbitmq' => [
+            'driver' => 'rabbitmq',
+            'queue' => env('RABBITMQ_QUEUE', 'default'),
+            'connection' => AMQPLazyConnection::class,
+            'hosts' => [
+                [
+                    'host' => env('RABBITMQ_HOST', 'rabbitmq'),
+                    'port' => env('RABBITMQ_PORT', 5672),
+                    'user' => env('RABBITMQ_USER', 'sail'),
+                    'password' => env('RABBITMQ_PASSWORD', 'password'),
+                    'vhost' => env('RABBITMQ_VHOST', '/'),
+                ],
+            ],
+            'options' => [
+                'queue' => [
+                    'job' => RabbitMQJob::class,
+
+                    // Mensagens rejeitadas/falhas vão para a fila "<fila>_dlq" (ex.: default_dlq)
+                    'reroute_failed' => true,
+                    'failed_exchange' => '',
+                    'failed_routing_key' => '%s_dlq',
+                ],
+            ],
+            'worker' => env('RABBITMQ_WORKER', 'default'),
+        ],
     ],
 
     /*
