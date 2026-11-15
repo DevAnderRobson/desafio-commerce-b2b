@@ -1,6 +1,6 @@
 # Onda 2: Home
 
-Status: ⬜ · Depende de: onda 1
+Status: ✅ implementada (falta a revisão visual no navegador) · Depende de: onda 1
 
 ## Objetivo
 
@@ -10,18 +10,18 @@ Home que apresenta a loja e leva ao produto: vitrine, carrosséis, promoções/m
 
 ### 2.1 Vitrine (hero)
 
-- [ ] Destaque principal com título específico e um CTA (ex.: "Ver ofertas da semana"), sem gradiente decorativo nem copy genérica.
-- [ ] Atalhos para as 5 categorias.
-- [ ] Mobile-first: hero em coluna única; em ultrawide, largura de conteúdo limitada.
+- [x] Destaque principal com título específico e um CTA (ex.: "Ver ofertas da semana"), sem gradiente decorativo nem copy genérica.
+- [x] Atalhos para as 5 categorias.
+- [x] Mobile-first: hero em coluna única; em ultrawide, largura de conteúdo limitada.
 
 ### 2.2 Carrosséis de produtos
 
-- [ ] Carrossel acessível (setas, teclado, swipe, `aria-roledescription`, sem autoplay agressivo; pausa se houver autoplay).
-- [ ] Seções: **Em promoção** (promoções vigentes), **Mais vendidos** (dados de pedidos), **Novidades/Destaques**.
-- [ ] Props adiadas (`Inertia::defer`) com skeleton por seção.
-- [ ] Quantidade de itens visíveis por breakpoint (1,5 no celular; 2–3 tablet; 4–6 desktop; mais em ultrawide).
-- [ ] Cliente aprovado: preço com selo de promoção e percentual quando vigente. Visitante: sem preço, "Entre para ver seu preço". Cliente pendente: "Cadastro em análise".
-- [ ] Botão "Adicionar" no card (quantidade 1) integrando com o carrinho (onda 5); até lá o botão fica oculto/desativado. Só aparece para cliente aprovado, não bloqueado e produto disponível no modelo dele.
+- [x] Carrossel acessível (setas, teclado, swipe, `aria-roledescription`, sem autoplay agressivo; pausa se houver autoplay).
+- [x] Seções: **Em promoção** (promoções vigentes), **Mais vendidos** (dados de pedidos), **Novidades/Destaques**.
+- [x] Props adiadas (`Inertia::defer`) com skeleton por seção.
+- [x] Quantidade de itens visíveis por breakpoint (1,5 no celular; 2–3 tablet; 4–6 desktop; mais em ultrawide).
+- [x] Cliente aprovado: preço com selo de promoção e percentual quando vigente. Visitante: sem preço, "Entre para ver seu preço". Cliente pendente: "Cadastro em análise".
+- [x] (card pronto; ação entra na onda 5) Botão "Adicionar" no card (quantidade 1) integrando com o carrinho (onda 5); até lá o botão fica oculto/desativado. Só aparece para cliente aprovado, não bloqueado e produto disponível no modelo dele.
 
 Regras / atenção:
 
@@ -32,12 +32,12 @@ Regras / atenção:
 
 ### 2.3 Newsletter
 
-- [ ] Formulário (e-mail + consentimento) no rodapé/seção da home, rota `newsletter.store`.
-- [ ] Validação, e-mail único, resposta idempotente (já inscrito não vaza informação). Prioridade P2 (ver [README](../README.md)).
-- [ ] **Double opt-in:** inscrição fica `pendente`; envia e-mail com link assinado e com expiração; só vira `confirmada` ao clicar; reenvio com throttle; descadastro por link assinado em todo e-mail.
-- [ ] Throttle por IP; honeypot simples.
-- [ ] Mensagem de sucesso/erro acessível (`aria-live`).
-- [ ] Testes: inscrição gera pendente e e-mail, confirmação válida/expirada/adulterada, duplicada, e-mail inválido, throttle, descadastro.
+- [x] Formulário (e-mail + consentimento) no rodapé/seção da home, rota `newsletter.store`.
+- [x] Validação, e-mail único, resposta idempotente (já inscrito não vaza informação). Prioridade P2 (ver [README](../README.md)).
+- [x] **Double opt-in:** inscrição fica `pendente`; envia e-mail com link assinado e com expiração; só vira `confirmada` ao clicar; reenvio com throttle; descadastro por link assinado em todo e-mail.
+- [x] Throttle por IP; honeypot simples.
+- [x] Mensagem de sucesso/erro acessível (`aria-live`).
+- [x] Testes: inscrição gera pendente e e-mail, confirmação válida/expirada/adulterada, duplicada, e-mail inválido, throttle, descadastro.
 
 Pontos de atenção: LGPD (texto de consentimento, descadastro); confirmação por e-mail (double opt-in) é obrigatória.
 
@@ -47,4 +47,5 @@ Pontos de atenção: LGPD (texto de consentimento, descadastro); confirmação p
 
 ## Definição de pronto
 
-- [ ] Itens marcados · ci:check verde · revisão Impeccable e dos breakpoints.
+- [ ] Revisão Impeccable e dos breakpoints no navegador (você).
+- [x] Itens marcados · ci:check verde.

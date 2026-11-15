@@ -164,3 +164,29 @@ it('treats a blocked but approved customer as able to see prices', function () {
 
     expect($this->resolver->resolve($customer, $product)->unitPriceCents)->toBe(500);
 });
+
+it('prices many products at once exactly like pricing them one by one', function () {
+    $customer = Customer::factory()->create();
+    $plain = pricedProduct($customer, 500);
+    $promoted = pricedProduct($customer, 1000, 900, 10);
+    $outside = Product::factory()->create();
+    Promotion::factory()->for($promoted)->percent(10)->create();
+
+    $quotes = $this->resolver->resolveMany($customer, collect([$plain, $promoted, $outside]), 10);
+
+    expect($quotes[$plain->id])->toEqual($this->resolver->resolve($customer, $plain, 10))
+        ->and($quotes[$promoted->id])->toEqual($this->resolver->resolve($customer, $promoted, 10))
+        ->and($quotes[$promoted->id]->unitPriceCents)->toBe(810)
+        ->and($quotes[$outside->id]->availability)->toBe(PriceAvailability::UnavailableForTable);
+});
+
+it('exposes the wholesale tier even when the quantity does not reach it', function () {
+    $customer = Customer::factory()->create();
+    $product = pricedProduct($customer, 1000, 900, 10);
+
+    $quote = $this->resolver->resolve($customer, $product, 1);
+
+    expect($quote->wholesaleApplied)->toBeFalse()
+        ->and($quote->wholesalePriceCents)->toBe(900)
+        ->and($quote->wholesaleMinQuantity)->toBe(10);
+});

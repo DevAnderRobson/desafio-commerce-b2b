@@ -59,6 +59,8 @@ class CompanyUserController extends Controller
 
         Mail::to($user->email)->queue(new CompanyUserInvitedMail($customer, $url));
 
-        return to_route('account.users.index')->with('status', 'Convite enviado.');
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Convite enviado.']);
+
+        return to_route('account.users.index');
     }
 }

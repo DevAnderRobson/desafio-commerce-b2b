@@ -60,7 +60,7 @@ Regras / atenção:
 ### 1.4 Autorização de compra
 
 - [x] Gates `view-prices` e `checkout` (`AppServiceProvider`): cliente não aprovado não vê preço nem compra; cliente bloqueado não finaliza compra; usuário sem `customer` não vê preço.
-- [ ] (depende das telas das ondas 2–4) Garantir que preço/tabela do cliente **não vazam** em props Inertia nem JSON para visitante ou cliente não aprovado (teste explícito).
+- [x] (coberto na home em `HomeTest`; repetir nas ondas 3–4) Garantir que preço/tabela do cliente **não vazam** em props Inertia nem JSON para visitante ou cliente não aprovado (teste explícito).
 - [x] Testes de política (`ShopAbilitiesTest`).
 
 ## Melhorias futuras

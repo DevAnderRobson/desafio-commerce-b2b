@@ -7,6 +7,7 @@ use App\Models\PriceTableItem;
 use App\Models\Product;
 use App\Models\Promotion;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Collection;
 
 /**
  * Single place that decides the unit price of a product for a customer.
@@ -19,28 +20,59 @@ class PriceResolver
 {
     public function resolve(?Customer $customer, Product $product, int $quantity = 1, ?CarbonInterface $on = null): PriceQuote
     {
+        return $this->resolveMany($customer, collect([$product]), $quantity, $on)[$product->id];
+    }
+
+    /**
+     * Prices several products with a fixed number of queries, for listings and carousels.
+     *
+     * @param  Collection<int, Product>  $products
+     * @return array<int, PriceQuote> keyed by product id
+     */
+    public function resolveMany(?Customer $customer, Collection $products, int $quantity = 1, ?CarbonInterface $on = null): array
+    {
+        $ids = $products->pluck('id')->all();
+
         if ($customer === null || ! $customer->isApproved()) {
-            return PriceQuote::hidden();
+            return array_fill_keys($ids, PriceQuote::hidden());
         }
 
         if ($customer->price_table_id === null) {
-            return PriceQuote::unavailableForTable();
+            return array_fill_keys($ids, PriceQuote::unavailableForTable());
         }
 
-        $item = PriceTableItem::query()
+        $items = PriceTableItem::query()
             ->where('price_table_id', $customer->price_table_id)
-            ->where('product_id', $product->id)
-            ->first();
+            ->whereIn('product_id', $ids)
+            ->get()
+            ->keyBy('product_id');
 
-        if ($item === null) {
-            return PriceQuote::unavailableForTable();
-        }
+        $promotions = Promotion::query()
+            ->whereIn('product_id', $ids)
+            ->activeOn($on ?? now())
+            ->orderByDesc('discount_percent')
+            ->get()
+            ->unique('product_id')
+            ->keyBy('product_id');
 
         $quantity = max(1, $quantity);
+        $quotes = [];
+
+        foreach ($ids as $id) {
+            $item = $items->get($id);
+
+            $quotes[$id] = $item === null
+                ? PriceQuote::unavailableForTable()
+                : $this->quote($item, $promotions->get($id), $quantity);
+        }
+
+        return $quotes;
+    }
+
+    private function quote(PriceTableItem $item, ?Promotion $promotion, int $quantity): PriceQuote
+    {
         $wholesaleApplied = $item->hasWholesalePrice() && $quantity >= (int) $item->wholesale_min_quantity;
         $unitPrice = $wholesaleApplied ? (int) $item->wholesale_price_cents : $item->price_cents;
-
-        $promotion = $this->bestPromotion($product, $on ?? now());
 
         if ($promotion !== null) {
             $unitPrice = $this->applyDiscount($unitPrice, $promotion->discountBasisPoints());
@@ -53,16 +85,9 @@ class PriceResolver
             unitPriceCents: $unitPrice,
             wholesaleApplied: $wholesaleApplied,
             promotionPercent: $promotion?->discount_percent,
+            wholesalePriceCents: $item->hasWholesalePrice() ? $item->wholesale_price_cents : null,
+            wholesaleMinQuantity: $item->hasWholesalePrice() ? $item->wholesale_min_quantity : null,
         );
-    }
-
-    private function bestPromotion(Product $product, CarbonInterface $on): ?Promotion
-    {
-        return Promotion::query()
-            ->where('product_id', $product->id)
-            ->activeOn($on)
-            ->orderByDesc('discount_percent')
-            ->first();
     }
 
     private function applyDiscount(int $unitPriceCents, int $discountBasisPoints): int

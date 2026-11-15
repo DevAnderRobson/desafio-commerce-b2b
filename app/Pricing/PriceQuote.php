@@ -14,6 +14,8 @@ final readonly class PriceQuote
         public int $unitPriceCents = 0,
         public bool $wholesaleApplied = false,
         public ?string $promotionPercent = null,
+        public ?int $wholesalePriceCents = null,
+        public ?int $wholesaleMinQuantity = null,
     ) {}
 
     public static function hidden(): self

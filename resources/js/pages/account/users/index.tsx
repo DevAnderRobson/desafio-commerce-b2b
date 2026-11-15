@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import { StoreButton } from '@/components/button';
 import { FormField } from '@/components/form-field';
 import { Spinner } from '@/components/ui/spinner';
@@ -16,8 +16,6 @@ type Props = {
 };
 
 export default function CompanyUsers({ users }: Props) {
-    const { flash } = usePage<{ flash?: { status?: string } }>().props;
-
     return (
         <>
             <Head title="Usuários da empresa" />
@@ -85,14 +83,6 @@ export default function CompanyUsers({ users }: Props) {
                                     {processing && <Spinner />}
                                     Enviar convite
                                 </StoreButton>
-                                {flash?.status && (
-                                    <p
-                                        role="status"
-                                        className="text-sm text-success-muted-foreground"
-                                    >
-                                        {flash.status}
-                                    </p>
-                                )}
                             </>
                         )}
                     </Form>

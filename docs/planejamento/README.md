@@ -32,7 +32,7 @@ Ordem sugerida; cada onda depende das anteriores.
 | Onda | Arquivo                                                        | Resumo                                                                    | Status |
 | ---- | -------------------------------------------------------------- | ------------------------------------------------------------------------- | ------ |
 | 1    | [01-fundacao-e-catalogo.md](tarefas/01-fundacao-e-catalogo.md) | Layout da loja, banco, importação dos JSONs, preço por cliente            | 🟨     |
-| 2    | [02-home.md](tarefas/02-home.md)                               | Vitrine, carrosséis, promoções/mais vendidos, newsletter                  | ⬜     |
+| 2    | [02-home.md](tarefas/02-home.md)                               | Vitrine, carrosséis, promoções/mais vendidos, newsletter                  | 🟨     |
 | 3    | [03-busca.md](tarefas/03-busca.md)                             | Full-text search com debounce de 3 s, listagem, filtros                   | ⬜     |
 | 4    | [04-detalhe-do-produto.md](tarefas/04-detalhe-do-produto.md)   | Galeria com zoom, ficha, compartilhar, desejos, avaliações                | ⬜     |
 | 5    | [05-carrinho-e-navbar.md](tarefas/05-carrinho-e-navbar.md)     | Carrinho persistente, contador animado no navbar                          | ⬜     |
