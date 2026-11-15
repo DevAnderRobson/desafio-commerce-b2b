@@ -12,7 +12,7 @@ import { createContext, useContext, useId, useState } from 'react';
 import AppLogo from '@/components/app-logo';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { StoreButton } from '@/components/button';
-import { FormField } from '@/components/form-field';
+import { NewsletterForm } from '@/components/newsletter-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -78,7 +78,6 @@ export function StoreLayout({
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
     const searchInputId = useId();
     const mobileSearchInputId = useId();
-    const newsletterInputId = useId();
 
     if (isInsideStoreLayout) {
         return <>{children}</>;
@@ -516,44 +515,7 @@ export function StoreLayout({
                                 </nav>
 
                                 <div className="flex flex-col gap-3 md:col-span-4">
-                                    {newsletterSlot ?? (
-                                        <form
-                                            onSubmit={(event) =>
-                                                event.preventDefault()
-                                            }
-                                            aria-label="Inscrição no informativo comercial"
-                                            className="flex flex-col gap-3"
-                                        >
-                                            <h2 className="text-sm font-semibold text-foreground">
-                                                Informativo comercial
-                                            </h2>
-                                            <p className="text-xs leading-relaxed text-muted-foreground">
-                                                Receba avisos de reposição de
-                                                estoque e campanhas de atacado.
-                                                Confirmação por e-mail (double
-                                                opt-in).
-                                            </p>
-                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                                                <FormField
-                                                    id={newsletterInputId}
-                                                    label="E-mail corporativo"
-                                                    type="email"
-                                                    name="email"
-                                                    autoComplete="email"
-                                                    placeholder="compras@suaempresa.com.br"
-                                                    containerClassName="flex-1"
-                                                />
-                                                <StoreButton
-                                                    type="submit"
-                                                    variant="secondary"
-                                                    size="touch"
-                                                    className="shrink-0"
-                                                >
-                                                    Inscrever-se
-                                                </StoreButton>
-                                            </div>
-                                        </form>
-                                    )}
+                                    {newsletterSlot ?? <NewsletterForm />}
                                 </div>
                             </div>
                         )}
