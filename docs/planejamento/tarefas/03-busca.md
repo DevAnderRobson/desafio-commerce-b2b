@@ -1,6 +1,6 @@
 # Onda 3: Busca
 
-Status: ⬜ · Depende de: onda 1
+Status: ✅ implementada (falta a revisão visual no navegador) · Depende de: onda 1
 
 ## Objetivo
 
@@ -15,36 +15,36 @@ A requisição ao backend durante a digitação ocorre **somente após 3 segundo
 
 ### 3.1 Backend (full-text)
 
-- [ ] Extensões `unaccent` e `pg_trgm`; coluna `search_vector` (nome, marca, categoria, sku, ean) com índice GIN, config `portuguese`.
-- [ ] Ranking (`ts_rank`) com peso maior para nome/marca; busca exata por EAN/SKU.
-- [ ] Tolerância a erro de digitação via similaridade (`pg_trgm`) como fallback.
-- [ ] Apenas produtos ativos. Sem estoque aparecem ao final. Produto **fora da tabela do cliente aparece** com a mensagem de indisponibilidade (D14), não é escondido.
-- [ ] Rate limit nas rotas de busca/sugestão.
-- [ ] Rota `search.suggest`: JSON enxuto com **no máximo 5 itens** (id, nome, marca, slug, miniatura; sem preço para visitante) e `search.index`: página completa, paginada.
-- [ ] O banco de testes é PostgreSQL (D28). Testes: acentos, plural, EAN, termo sem resultado, produto inativo, paginação.
+- [x] Extensões `unaccent` e `pg_trgm`; coluna gerada `search_vector` (nome, marca, descrição; SKU/EAN por igualdade exata; categoria só pelo filtro, pois coluna gerada não lê outra tabela) com índice GIN, config `portuguese`.
+- [x] Ranking (`ts_rank`) com peso maior para nome/marca; busca exata por EAN/SKU.
+- [x] Tolerância a erro de digitação via similaridade (`pg_trgm`) como fallback.
+- [x] Apenas produtos ativos. Sem estoque aparecem ao final. Produto **fora da tabela do cliente aparece** com a mensagem de indisponibilidade (D14), não é escondido.
+- [x] Rate limit nas rotas de busca/sugestão.
+- [x] Rota `search.suggest`: JSON enxuto com **no máximo 5 itens** (id, nome, marca, slug, miniatura; sem preço para visitante) e `search.index`: página completa, paginada.
+- [x] O banco de testes é PostgreSQL (D28). Testes: acentos, plural, EAN, termo sem resultado, produto inativo, paginação.
 
 ### 3.2 Navbar: campo de busca com debounce
 
-- [ ] Hook `useDebouncedSearch`: cada tecla **zera o contador**; dispara só após 3 000 ms sem digitar.
-- [ ] Constante única configurável para o atraso (3 000 ms).
-- [ ] Enter e botão "Buscar" **navegam imediatamente para `search.index`** com o termo e cancelam o contador pendente e qualquer sugestão em andamento.
-- [ ] Painel de sugestões: até 5 itens; clique/Enter no item vai ao detalhe (`products.show`); rodapé do painel com botão "Busca avançada" que navega para `search.index` com o termo.
-- [ ] Sem resultados: mensagem curta e o botão "Busca avançada" ainda disponível.
-- [ ] `AbortController`: cancela requisição anterior; ignora resposta velha.
-- [ ] Não disparar para texto vazio ou muito curto (mínimo 2 caracteres).
-- [ ] Indicação discreta durante a espera ("Buscando em instantes…") e skeleton durante a requisição, sem spinner pulsante exagerado.
-- [ ] Mobile: ícone abre campo em overlay de tela cheia; desktop: campo central no navbar.
-- [ ] Teclado: setas navegam sugestões, Esc fecha, `role="combobox"` com `aria-live` para anunciar contagem de resultados.
-- [ ] Testes de frontend do hook com timers falsos: várias teclas = 1 requisição após 3 s; tecla antes de 3 s reinicia a contagem; Enter navega imediato sem requisição de sugestão; limpar cancela.
+- [x] Hook `useDebouncedSearch`: cada tecla **zera o contador**; dispara só após 3 000 ms sem digitar.
+- [x] Constante única configurável para o atraso (3 000 ms).
+- [x] Enter e botão "Buscar" **navegam imediatamente para `search.index`** com o termo e cancelam o contador pendente e qualquer sugestão em andamento.
+- [x] Painel de sugestões: até 5 itens; clique/Enter no item vai ao detalhe (`products.show`); rodapé do painel com botão "Busca avançada" que navega para `search.index` com o termo.
+- [x] Sem resultados: mensagem curta e o botão "Busca avançada" ainda disponível.
+- [x] `AbortController`: cancela requisição anterior; ignora resposta velha.
+- [x] Não disparar para texto vazio ou muito curto (mínimo 2 caracteres).
+- [x] Indicação discreta durante a espera ("Buscando em instantes…") e skeleton durante a requisição, sem spinner pulsante exagerado.
+- [x] Mobile: ícone abre campo em overlay de tela cheia; desktop: campo central no navbar.
+- [x] Teclado: setas navegam sugestões, Esc fecha, `role="combobox"` com `aria-live` para anunciar contagem de resultados.
+- [x] (verificado com script descartável usando o controlador puro; não há runner de testes de frontend e adicionar Vitest depende de aprovação) Testes de frontend do hook com timers falsos: várias teclas = 1 requisição após 3 s; tecla antes de 3 s reinicia a contagem; Enter navega imediato sem requisição de sugestão; limpar cancela.
 
 ### 3.3 Página de resultados
 
-- [ ] Grade responsiva de cards, ordenação (relevância, menor preço, nome), filtros por **categoria** e marca, e lista de categorias navegável. Ordenar/filtrar por preço só para cliente aprovado.
-- [ ] Mobile: filtros em drawer; desktop: barra lateral.
-- [ ] Estado vazio com sugestões (categorias, correção de termo).
-- [ ] URL reflete busca e filtros (compartilhável; botão voltar funciona).
-- [ ] Preços por cliente (usa `PriceResolver`); evitar N+1.
-- [ ] Preservar posição de scroll ao voltar do detalhe.
+- [x] Grade responsiva de cards, ordenação (relevância, menor preço, nome), filtros por **categoria** e marca, e lista de categorias navegável. Ordenar/filtrar por preço só para cliente aprovado.
+- [x] Mobile: filtros em drawer; desktop: barra lateral.
+- [x] Estado vazio com sugestões (categorias, correção de termo).
+- [x] URL reflete busca e filtros (compartilhável; botão voltar funciona).
+- [x] Preços por cliente (usa `PriceResolver`); evitar N+1.
+- [x] Preservar posição de scroll ao voltar do detalhe.
 
 ## Pontos de atenção
 
@@ -58,4 +58,5 @@ A requisição ao backend durante a digitação ocorre **somente após 3 segundo
 
 ## Definição de pronto
 
-- [ ] Itens marcados · ci:check verde · revisão Impeccable e breakpoints.
+- [ ] Revisão Impeccable e breakpoints no navegador (você).
+- [x] Itens marcados · ci:check verde.

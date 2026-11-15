@@ -1,7 +1,12 @@
 <?php
 
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,6 +20,24 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', HomeController::class)->name('home');
+
+Route::middleware('throttle:search')->group(function () {
+    Route::get('buscar', [SearchController::class, 'index'])->name('search.index');
+    Route::get('buscar/sugestoes', [SearchController::class, 'suggest'])->name('search.suggest');
+    Route::get('categorias/{category:slug}', [CategoryController::class, 'show'])->name('categories.show');
+});
+
+Route::get('produtos/{slug}', [ProductController::class, 'show'])
+    ->middleware('throttle:search')
+    ->name('products.show');
+
+Route::middleware('auth')->group(function () {
+    Route::post('lista-de-desejos/{product}', [WishlistController::class, 'store'])->name('wishlist.store');
+    Route::delete('lista-de-desejos/{product}', [WishlistController::class, 'destroy'])->name('wishlist.destroy');
+    Route::match(['post', 'put'], 'produtos/{product}/avaliacoes', [ReviewController::class, 'store'])
+        ->middleware('throttle:reviews')
+        ->name('reviews.store');
+});
 
 Route::post('newsletter', [NewsletterController::class, 'store'])
     ->middleware('throttle:newsletter')

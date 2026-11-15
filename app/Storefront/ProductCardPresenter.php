@@ -53,7 +53,7 @@ class ProductCardPresenter
             'imageAlt' => $image !== null ? $image->alt : $product->name,
             'inStock' => $inStock,
             'stockQuantity' => $available,
-            'priceState' => $this->priceState($quote, $user, $customer),
+            'priceState' => $this->priceState($quote, $user),
             'showAddToCart' => $quote->isAvailable() && $inStock,
         ];
     }
@@ -61,8 +61,10 @@ class ProductCardPresenter
     /**
      * @return array<string, mixed>
      */
-    private function priceState(PriceQuote $quote, ?User $user, ?Customer $customer): array
+    public function priceState(PriceQuote $quote, ?User $user): array
     {
+        $customer = $user?->customer;
+
         return match ($quote->availability) {
             PriceAvailability::Hidden => $user === null
                 ? ['status' => 'guest', 'loginHref' => route('login', absolute: false)]

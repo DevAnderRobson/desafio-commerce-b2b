@@ -20,6 +20,9 @@ class Stock extends Model
     /** @use HasFactory<StockFactory> */
     use HasFactory;
 
+    /** At or below this many available units a product is shown as "low stock". */
+    public const LOW_STOCK_THRESHOLD = 10;
+
     /**
      * @return BelongsTo<Product, $this>
      */

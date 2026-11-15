@@ -1,6 +1,6 @@
 # Onda 4: Detalhe do produto
 
-Status: ⬜ · Depende de: ondas 1 e 3 (card/preço); carrinho integra na onda 5; o selo "Comprou" usa pedidos entregues (seeder demo até a onda 7 existir)
+Status: 🟨 (implementada; revisão visual pendente; 4.6 integra na onda 5) · Depende de: ondas 1 e 3 (card/preço); carrinho integra na onda 5; o selo "Comprou" usa pedidos entregues (seeder demo até a onda 7 existir)
 
 ## Objetivo
 
