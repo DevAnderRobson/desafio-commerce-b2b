@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Mercearia - vista 3">
+  <title>Mercearia - vista 3</title>
+  <rect width="400" height="400" fill="#f4f4f5"/>
+  <rect x="24" y="24" width="352" height="352" rx="16" fill="#fafafa" stroke="#e4e4e7" stroke-width="2"/>
+  <rect x="116" y="120" width="168" height="156" rx="10" fill="#e4e4e7" stroke="#52525b" stroke-width="3"/>
+  <line x1="116" y1="156" x2="284" y2="156" stroke="#52525b" stroke-width="3"/>
+  <rect x="144" y="180" width="112" height="68" rx="6" fill="#fafafa" stroke="#71717a" stroke-width="2"/>
+  <line x1="164" y1="206" x2="236" y2="206" stroke="#52525b" stroke-width="2"/>
+  <line x1="176" y1="224" x2="224" y2="224" stroke="#a1a1aa" stroke-width="2"/>
+  <text x="200" y="330" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="600" fill="#3f3f46">Mercearia</text>
+  <text x="200" y="352" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#71717a">Vista 3</text>
+</svg>

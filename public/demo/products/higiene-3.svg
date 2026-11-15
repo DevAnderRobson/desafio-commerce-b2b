@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Higiene - vista 3">
+  <title>Higiene - vista 3</title>
+  <rect width="400" height="400" fill="#f4f4f5"/>
+  <rect x="24" y="24" width="352" height="352" rx="16" fill="#fafafa" stroke="#e4e4e7" stroke-width="2"/>
+  <path d="M156 104h88l-16 144h-56z" fill="#e4e4e7" stroke="#52525b" stroke-width="3"/>
+  <rect x="172" y="248" width="56" height="24" rx="4" fill="#d4d4d8" stroke="#52525b" stroke-width="3"/>
+  <rect x="172" y="140" width="56" height="72" rx="4" fill="#fafafa" stroke="#71717a" stroke-width="2"/>
+  <text x="200" y="330" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="600" fill="#3f3f46">Higiene</text>
+  <text x="200" y="352" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#71717a">Vista 3</text>
+</svg>

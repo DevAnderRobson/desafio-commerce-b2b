@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Limpeza - vista 3">
+  <title>Limpeza - vista 3</title>
+  <rect width="400" height="400" fill="#f4f4f5"/>
+  <rect x="24" y="24" width="352" height="352" rx="16" fill="#fafafa" stroke="#e4e4e7" stroke-width="2"/>
+  <rect x="128" y="104" width="144" height="176" rx="10" fill="#e4e4e7" stroke="#52525b" stroke-width="3"/>
+  <line x1="128" y1="140" x2="272" y2="140" stroke="#52525b" stroke-width="2"/>
+  <rect x="152" y="168" width="96" height="80" rx="6" fill="#fafafa" stroke="#71717a" stroke-width="2"/>
+  <circle cx="200" cy="208" r="18" fill="#d4d4d8" stroke="#52525b" stroke-width="2"/>
+  <text x="200" y="330" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="600" fill="#3f3f46">Limpeza</text>
+  <text x="200" y="352" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#71717a">Vista 3</text>
+</svg>

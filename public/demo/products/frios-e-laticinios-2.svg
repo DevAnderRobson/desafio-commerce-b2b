@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Frios e Laticínios - vista 2">
+  <title>Frios e Laticínios - vista 2</title>
+  <rect width="400" height="400" fill="#f4f4f5"/>
+  <rect x="24" y="24" width="352" height="352" rx="16" fill="#fafafa" stroke="#e4e4e7" stroke-width="2"/>
+  <path d="M148 116l52-28 52 28v164H148z" fill="#e4e4e7" stroke="#52525b" stroke-width="3" stroke-linejoin="round"/>
+  <line x1="148" y1="116" x2="252" y2="116" stroke="#52525b" stroke-width="3"/>
+  <rect x="164" y="152" width="72" height="88" rx="6" fill="#fafafa" stroke="#71717a" stroke-width="2"/>
+  <circle cx="200" cy="196" r="16" fill="#d4d4d8" stroke="#52525b" stroke-width="2"/>
+  <text x="200" y="330" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="600" fill="#3f3f46">Frios e Laticínios</text>
+  <text x="200" y="352" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#71717a">Vista 2</text>
+</svg>

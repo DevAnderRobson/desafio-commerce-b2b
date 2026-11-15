@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Produto de demonstração">
+  <title>Produto de demonstração</title>
+  <rect width="400" height="400" fill="#f4f4f5"/>
+  <rect x="24" y="24" width="352" height="352" rx="16" fill="#fafafa" stroke="#e4e4e7" stroke-width="2"/>
+  <rect x="128" y="112" width="144" height="156" rx="12" fill="#e4e4e7" stroke="#52525b" stroke-width="3"/>
+  <line x1="128" y1="148" x2="272" y2="148" stroke="#52525b" stroke-width="3"/>
+  <rect x="156" y="176" width="88" height="64" rx="6" fill="#fafafa" stroke="#71717a" stroke-width="2"/>
+  <text x="200" y="330" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="600" fill="#3f3f46">Catálogo</text>
+  <text x="200" y="352" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#71717a">Imagem de exemplo</text>
+</svg>
