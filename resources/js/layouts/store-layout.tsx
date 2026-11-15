@@ -13,8 +13,7 @@ import AppLogo from '@/components/app-logo';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { StoreButton } from '@/components/button';
 import { NewsletterForm } from '@/components/newsletter-form';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { SearchBox } from '@/components/search-box';
 import {
     Sheet,
     SheetContent,
@@ -25,6 +24,7 @@ import {
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import { home, login } from '@/routes';
+import searchRoutes from '@/routes/search';
 import type { NavItem, StoreLayoutProps, User } from '@/types';
 
 const StoreLayoutContext = createContext(false);
@@ -41,7 +41,7 @@ const defaultStoreNavItems: NavItem[] = [
     },
     {
         title: 'Catálogo',
-        href: '/buscar',
+        href: searchRoutes.index.url(),
         icon: Search,
     },
 ];
@@ -55,7 +55,7 @@ export function StoreLayout({
     children,
     breadcrumbs = [],
     navItems = defaultStoreNavItems,
-    searchQuery = '',
+    searchQuery,
     searchPlaceholder = 'Buscar por nome, SKU, código EAN ou marca...',
     searchSlot,
     cartHref = '/carrinho',
@@ -74,6 +74,9 @@ export function StoreLayout({
     const isInsideStoreLayout = useContext(StoreLayoutContext);
     const page = usePage();
     const user = (page.props.auth as { user?: User | null } | undefined)?.user;
+    const pageSearchQuery =
+        typeof page.props.query === 'string' ? page.props.query : '';
+    const resolvedSearchQuery = searchQuery ?? pageSearchQuery;
     const { isCurrentUrl } = useCurrentUrl();
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
     const searchInputId = useId();
@@ -236,48 +239,15 @@ export function StoreLayout({
                             </nav>
                         </div>
 
-                        {/* Centro: Busca estática/visual em telas >= sm ou slot customizado */}
+                        {/* Centro: Busca com debounce de 3s em telas >= md ou slot customizado */}
                         <div className="hidden max-w-xl flex-1 md:block">
                             {searchSlot ?? (
-                                <form
-                                    role="search"
-                                    aria-label="Buscar produtos no catálogo"
-                                    onSubmit={(event) => event.preventDefault()}
-                                    className="relative flex w-full items-center"
-                                >
-                                    <Label
-                                        htmlFor={searchInputId}
-                                        className="sr-only"
-                                    >
-                                        Buscar produtos no catálogo
-                                    </Label>
-                                    <Search
-                                        className="pointer-events-none absolute left-3 size-4 text-muted-foreground"
-                                        aria-hidden="true"
-                                    />
-                                    <Input
-                                        id={searchInputId}
-                                        type="search"
-                                        name="q"
-                                        defaultValue={searchQuery}
-                                        placeholder={searchPlaceholder}
-                                        autoComplete="off"
-                                        className="pr-24 pl-9"
-                                    />
-                                    <StoreButton
-                                        type="submit"
-                                        variant="secondary"
-                                        size="sm"
-                                        className="absolute right-1.5 min-h-8 px-3 text-xs font-semibold"
-                                    >
-                                        Buscar
-                                    </StoreButton>
-                                    <div
-                                        aria-live="polite"
-                                        aria-atomic="true"
-                                        className="sr-only"
-                                    />
-                                </form>
+                                <SearchBox
+                                    inputId={searchInputId}
+                                    initialQuery={resolvedSearchQuery}
+                                    placeholder={searchPlaceholder}
+                                    variant="desktop"
+                                />
                             )}
                         </div>
 
@@ -374,45 +344,38 @@ export function StoreLayout({
                         </div>
                     </div>
 
-                    {/* Overlay compacto de busca para celular pequeno (320px+) e tablet (< md) */}
+                    {/* Overlay de tela cheia de busca para celular (320px+) e tablet (< md) */}
                     {mobileSearchOpen && (
                         <div
                             id="mobile-search-overlay"
-                            className="border-t border-border bg-background px-4 py-3 md:hidden"
+                            role="region"
+                            aria-label="Busca de produtos"
+                            className="fixed inset-x-0 top-16 bottom-0 z-50 flex flex-col bg-background/95 backdrop-blur-xs md:hidden"
                         >
-                            {searchSlot ?? (
-                                <form
-                                    role="search"
-                                    aria-label="Buscar produtos no catálogo"
-                                    onSubmit={(event) => event.preventDefault()}
-                                    className="flex items-center gap-2"
-                                >
-                                    <Label
-                                        htmlFor={mobileSearchInputId}
-                                        className="sr-only"
-                                    >
-                                        Buscar produtos
-                                    </Label>
-                                    <div className="relative flex-1">
-                                        <Search
-                                            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                                            aria-hidden="true"
-                                        />
-                                        <Input
-                                            id={mobileSearchInputId}
-                                            type="search"
-                                            name="q"
-                                            defaultValue={searchQuery}
-                                            placeholder="Nome, SKU ou marca..."
-                                            autoFocus
-                                            className="pl-9"
-                                        />
-                                    </div>
-                                    <StoreButton type="submit" size="touch">
-                                        Buscar
-                                    </StoreButton>
-                                </form>
-                            )}
+                            <div className="border-t border-b border-border bg-background px-3 py-3 sm:px-4">
+                                {searchSlot ?? (
+                                    <SearchBox
+                                        inputId={mobileSearchInputId}
+                                        initialQuery={resolvedSearchQuery}
+                                        placeholder="Nome, SKU, EAN ou marca..."
+                                        autoFocus
+                                        variant="mobile"
+                                        onAfterNavigate={() =>
+                                            setMobileSearchOpen(false)
+                                        }
+                                        onCloseOverlay={() =>
+                                            setMobileSearchOpen(false)
+                                        }
+                                    />
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                tabIndex={-1}
+                                aria-label="Fechar busca de produtos"
+                                onClick={() => setMobileSearchOpen(false)}
+                                className="flex-1 bg-foreground/20"
+                            />
                         </div>
                     )}
 
@@ -480,7 +443,7 @@ export function StoreLayout({
                                             </li>
                                             <li>
                                                 <Link
-                                                    href="/buscar"
+                                                    href={searchRoutes.index.url()}
                                                     className="inline-flex min-h-11 items-center hover:text-foreground hover:underline focus-visible:rounded-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                                 >
                                                     Busca avançada
