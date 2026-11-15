@@ -10,6 +10,13 @@ export type User = {
     [key: string]: unknown;
 };
 
+export type CompanyContext = {
+    name: string;
+    approval_status: 'pending' | 'approved' | 'rejected';
+    is_blocked: boolean;
+    is_owner: boolean;
+};
+
 export type Auth = {
     user: User;
 };

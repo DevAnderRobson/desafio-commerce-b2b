@@ -1,6 +1,6 @@
 # Onda 8: Área do cliente
 
-Status: ⬜ · **8.A** depende só da onda 1 e deve ser feita logo depois dela (o preço depende da aprovação); **8.B** depende da onda 7 (pedidos)
+Status: 🟨 (8.A implementada, falta revisar no navegador) · **8.A** depende só da onda 1 e deve ser feita logo depois dela (o preço depende da aprovação); **8.B** depende da onda 7 (pedidos)
 
 ## Objetivo
 
@@ -10,15 +10,15 @@ Transformar as telas atuais (login, cadastro, dashboard, configurações) na ár
 
 ### 8.A Cadastro, aprovação e usuários da empresa
 
-- [ ] Reestilizar login/cadastro/recuperação/verificação de e-mail/2FA com o `StoreLayout`, **mantendo as rotas e a lógica do Fortify** e os testes existentes verdes.
-- [ ] Cadastro cria **empresa (CNPJ, razão social) + usuário dono** em uma transação; empresa nasce `pending`. Validar/mascarar CNPJ (dígitos verificadores).
-- [ ] Ordem do fluxo (D34): cadastro → **verificação de e-mail do dono** → fila de aprovação do lojista → aprovado/recusado. Cadastro com e-mail não verificado não aparece na fila e não pode ser aprovado.
-- [ ] Tela "Aguardando aprovação": pode entrar e navegar, sem preços e sem compra; ao aprovar/recusar, e-mail ao dono.
-- [ ] **CNPJ duplicado (D19):** o formulário **não revela** se o CNPJ existe; cria o cadastro pendente com a flag de duplicado; mesma resposta e tempo de resposta para CNPJ novo e existente (evita enumeração); throttle no cadastro. Ao recusar, o **lojista escolhe o e-mail (D35)**: (1) recusa padrão, genérica; ou (2) recusa orientando: "Já existe uma empresa com este CNPJ no sistema. Peça ao administrador da empresa para criar seu acesso pelo painel de usuários." Nunca citar nome da empresa nem do dono.
-- [ ] Aprovação/recusa pelo lojista via `customers:approve {id} {--reject} {--template=default|duplicate-owner}` até existir o painel (onda 9); dispara os e-mails. Para cadastro com flag de duplicado, o comando pede a escolha do template (D35).
-- [ ] **Painel de usuários da empresa** (só o dono, `/conta/usuarios`): **listar e criar/vincular** usuário (nome, e-mail); o novo usuário nasce aprovado e recebe e-mail de convite com link para definir a senha (D32). E-mail já em uso: mensagem genérica sem revelar de qual empresa.
+- [ ] (parcial: só o cadastro foi refeito, em pt-BR e com dados da empresa; login, recuperação, verificação e 2FA seguem no visual antigo) Reestilizar login/cadastro/recuperação/verificação de e-mail/2FA com o `StoreLayout`, **mantendo as rotas e a lógica do Fortify** e os testes existentes verdes.
+- [x] Cadastro cria **empresa (CNPJ, razão social) + usuário dono** em uma transação; empresa nasce `pending`. Validar/mascarar CNPJ (dígitos verificadores).
+- [x] Ordem do fluxo (D34): cadastro → **verificação de e-mail do dono** → fila de aprovação do lojista → aprovado/recusado. Cadastro com e-mail não verificado não aparece na fila e não pode ser aprovado.
+- [ ] (página e rota `account.pending-approval` criadas; falta o aviso/atalho nas telas, que depende das próximas ondas) Tela "Aguardando aprovação": pode entrar e navegar, sem preços e sem compra; ao aprovar/recusar, e-mail ao dono.
+- [x] **CNPJ duplicado (D19):** o formulário **não revela** se o CNPJ existe; cria o cadastro pendente com a flag de duplicado; mesma resposta e tempo de resposta para CNPJ novo e existente (evita enumeração); throttle no cadastro. Ao recusar, o **lojista escolhe o e-mail (D35)**: (1) recusa padrão, genérica; ou (2) recusa orientando: "Já existe uma empresa com este CNPJ no sistema. Peça ao administrador da empresa para criar seu acesso pelo painel de usuários." Nunca citar nome da empresa nem do dono.
+- [x] Aprovação/recusa pelo lojista via `customers:approve {id} {--reject} {--template=default|duplicate-owner}` até existir o painel (onda 9); dispara os e-mails. Para cadastro com flag de duplicado, o comando pede a escolha do template (D35).
+- [x] **Painel de usuários da empresa** (só o dono, `/conta/usuarios`): **listar e criar/vincular** usuário (nome, e-mail); o novo usuário nasce aprovado e recebe e-mail de convite com link para definir a senha (D32). E-mail já em uso: mensagem genérica sem revelar de qual empresa.
 - [ ] **NÃO implementar** desativação/remoção de usuários nem transferência de propriedade (ordem expressa; ver [03](../03-decisoes-e-pendencias.md#fora-de-escopo-não-implementar-ordem-expressa)). Em dúvida, perguntar.
-- [ ] Testes: dono vincula usuário sem aprovação; membro não vincula; usuário de outra empresa não acessa o painel; CNPJ duplicado não vaza existência e fica marcado; recusa envia o template escolhido (padrão ou orientando o administrador); e-mail não verificado não entra na fila; pendente não vê preço nem compra; aprovado vê; recusado bloqueado; visitante.
+- [x] Testes: dono vincula usuário sem aprovação; membro não vincula; usuário de outra empresa não acessa o painel; CNPJ duplicado não vaza existência e fica marcado; recusa envia o template escolhido (padrão ou orientando o administrador); e-mail não verificado não entra na fila; pendente não vê preço nem compra; aprovado vê; recusado bloqueado; visitante.
 
 ### 8.B Área do cliente
 

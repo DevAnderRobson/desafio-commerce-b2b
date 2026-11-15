@@ -1,6 +1,6 @@
 # Onda 1: Fundação e catálogo
 
-Status: 🟨 em andamento (backend 1.2–1.4 concluído por Claude Code; 1.1 e seeders demo pendentes) · Depende de: nada · Diretrizes: [00](../00-diretrizes.md) · Dados: [02](../02-modelo-de-dados.md)
+Status: 🟨 quase concluída (falta só a revisão visual dos layouts e o teste de vazamento de preço, que depende das telas das ondas 2–4) · Depende de: nada · Diretrizes: [00](../00-diretrizes.md) · Dados: [02](../02-modelo-de-dados.md)
 
 ## Objetivo
 
@@ -34,12 +34,13 @@ Regras / atenção:
 - [x] Relacionar `users` a `customers` (vários usuários por empresa; papel dono/membro em `users.company_role`, **sem** `owner_user_id`); `customers.approval_status` (pending/approved/rejected) e `duplicate_of_customer_id` (índice único parcial do CNPJ só para o cadastro original).
 - [x] Usuários de teste (`DemoUsersSeeder`, senha `password`): `dono1..3@example.com`, `membro1@example.com`, `pendente@example.com`, `duplicado@example.com`.
 - [x] Tabelas `product_images` e `product_attributes` (models `ProductImage`/`ProductAttribute`, relações `images()` e `specifications()` no `Product`).
-- [ ] Seeders de demonstração restantes (**delegar ao Antigravity**): imagens de exemplo, atributos genéricos, avaliações e pedidos entregues fictícios (estes dois últimos dependem de models das ondas 4 e 7).
+- [x] `DemoCatalogSeeder` (Antigravity, revisado): 3 imagens SVG neutras por produto ativo (`public/demo/products`) e 5 atributos pt-BR por produto ativo.
+- [ ] Avaliações e pedidos entregues fictícios: dependem de models das ondas 4 e 7.
 - [ ] Comando `customers:approve {id}` (movido para a onda 8.A, junto com o fluxo de cadastro e e-mails) para aprovar/recusar enquanto não há painel de gestão.
 - [x] Copiar os JSONs de `docs/data` para `database/seeders/data/` (D26) e criar `CatalogImporter` idempotente, usado pelo `DatabaseSeeder` e por `php artisan catalog:import {--path=}`, com relatório de inconsistências. Nada em runtime lê `docs/`. **Apenas copiar; jamais alterar, mover ou reformatar os arquivos de `docs/data`** (D26).
 - [x] **Banco de testes/CI em PostgreSQL (D28):** adicionar serviço Postgres ao `.github/workflows/tests.yml` e alinhar `.env.example`/`phpunit.xml`; confirmar `ci:check` verde localmente e no CI.
 - [x] Slugs únicos de produto/categoria.
-- [ ] Seeder demo adicional (**Antigravity**): promoções extras (marcadas como demo) para o carrossel; cliente 3 aprovado porém `bloqueado`; estoques variados.
+- [x] Promoções demo extras (8, `is_demo`, vigentes) e estoques variados preservados dos JSONs (48 zerados, 47 baixos, 405 altos); cliente 3 já vem bloqueado dos JSONs.
 - [x] Testes (com factories, D27): importação a partir de fixtures pequenas não duplica ao repetir; JSON inválido é reportado; produto inativo importado e oculto.
 
 Regras / atenção:

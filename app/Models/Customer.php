@@ -3,12 +3,16 @@
 namespace App\Models;
 
 use App\Enums\ApprovalStatus;
+use App\Enums\CompanyRole;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -62,6 +66,33 @@ class Customer extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    /**
+     * @return HasOne<User, $this>
+     */
+    public function owner(): HasOne
+    {
+        return $this->hasOne(User::class)->where('company_role', CompanyRole::Owner->value);
+    }
+
+    /**
+     * Pending registrations the store owner can act on: the owner already verified the e-mail.
+     *
+     * @param  Builder<Customer>  $query
+     * @return Builder<Customer>
+     */
+    #[Scope]
+    protected function awaitingReview(Builder $query): Builder
+    {
+        return $query
+            ->where('approval_status', ApprovalStatus::Pending->value)
+            ->whereHas('owner', fn (Builder $owner) => $owner->whereNotNull('email_verified_at'));
+    }
+
+    public function isDuplicateRegistration(): bool
+    {
+        return $this->duplicate_of_customer_id !== null;
     }
 
     public function isApproved(): bool

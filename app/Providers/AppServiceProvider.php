@@ -37,6 +37,9 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::define('view-prices', fn (User $user): bool => $user->customer?->isApproved() ?? false);
 
+        Gate::define('manage-company-users', fn (User $user): bool => $user->isCompanyOwner()
+            && ($user->customer?->isApproved() ?? false));
+
         Gate::define('checkout', fn (User $user): bool => ($user->customer?->isApproved() ?? false)
             && ! $user->customer->is_blocked);
     }

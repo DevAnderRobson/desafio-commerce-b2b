@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Account\CompanyUserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,4 +20,10 @@ Route::middleware(['auth', 'verified'])
     ->name('account.')
     ->group(function () {
         Route::inertia('/', 'account/dashboard')->name('dashboard');
+        Route::inertia('aguardando-aprovacao', 'account/pending-approval')->name('pending-approval');
+
+        Route::get('usuarios', [CompanyUserController::class, 'index'])->name('users.index');
+        Route::post('usuarios', [CompanyUserController::class, 'store'])
+            ->middleware('throttle:10,1')
+            ->name('users.store');
     });

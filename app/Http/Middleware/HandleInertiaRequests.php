@@ -41,7 +41,30 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'company' => $this->company($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+        ];
+    }
+
+    /**
+     * Company context used to explain why prices or purchases are unavailable. Prices and
+     * credit figures are never shared here.
+     *
+     * @return array{name: string, approval_status: string, is_blocked: bool, is_owner: bool}|null
+     */
+    private function company(Request $request): ?array
+    {
+        $customer = $request->user()?->customer;
+
+        if ($customer === null) {
+            return null;
+        }
+
+        return [
+            'name' => $customer->trade_name ?? $customer->legal_name,
+            'approval_status' => $customer->approval_status->value,
+            'is_blocked' => $customer->is_blocked,
+            'is_owner' => $request->user()->isCompanyOwner(),
         ];
     }
 }

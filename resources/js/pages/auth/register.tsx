@@ -1,9 +1,9 @@
 import { Form, Head } from '@inertiajs/react';
-import InputError from '@/components/input-error';
+import { StoreButton } from '@/components/button';
+import { FormField } from '@/components/form-field';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import InputError from '@/components/input-error';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { login } from '@/routes';
@@ -16,7 +16,7 @@ type Props = {
 export default function Register({ passwordRules }: Props) {
     return (
         <>
-            <Head title="Register" />
+            <Head title="Cadastro da empresa" />
             <Form
                 {...store.form()}
                 resetOnSuccess={['password', 'password_confirmation']}
@@ -25,87 +25,102 @@ export default function Register({ passwordRules }: Props) {
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
-                                <Input
-                                    id="name"
-                                    type="text"
+                        <div className="grid gap-5">
+                            <fieldset className="grid gap-4">
+                                <legend className="mb-1 text-sm font-semibold">
+                                    Dados da empresa
+                                </legend>
+                                <FormField
+                                    label="CNPJ"
+                                    name="cnpj"
+                                    inputMode="numeric"
+                                    autoComplete="off"
+                                    placeholder="00.000.000/0000-00"
                                     required
                                     autoFocus
-                                    tabIndex={1}
-                                    autoComplete="name"
+                                    error={errors.cnpj}
+                                />
+                                <FormField
+                                    label="Razão social"
+                                    name="legal_name"
+                                    autoComplete="organization"
+                                    required
+                                    error={errors.legal_name}
+                                />
+                                <FormField
+                                    label="Nome fantasia"
+                                    name="trade_name"
+                                    optional
+                                    optionalLabel="Opcional"
+                                    error={errors.trade_name}
+                                />
+                            </fieldset>
+
+                            <fieldset className="grid gap-4">
+                                <legend className="mb-1 text-sm font-semibold">
+                                    Seu acesso (administrador da empresa)
+                                </legend>
+                                <FormField
+                                    label="Nome completo"
                                     name="name"
-                                    placeholder="Full name"
-                                />
-                                <InputError
-                                    message={errors.name}
-                                    className="mt-2"
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
+                                    autoComplete="name"
                                     required
-                                    tabIndex={2}
-                                    autoComplete="email"
+                                    error={errors.name}
+                                />
+                                <FormField
+                                    label="E-mail"
                                     name="email"
-                                    placeholder="email@example.com"
-                                />
-                                <InputError message={errors.email} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
-                                <PasswordInput
-                                    id="password"
+                                    type="email"
+                                    autoComplete="email"
                                     required
-                                    tabIndex={3}
-                                    autoComplete="new-password"
-                                    name="password"
-                                    placeholder="Password"
-                                    passwordrules={passwordRules}
+                                    error={errors.email}
                                 />
-                                <InputError message={errors.password} />
-                            </div>
+                                <div className="grid gap-1.5">
+                                    <Label htmlFor="password">Senha</Label>
+                                    <PasswordInput
+                                        id="password"
+                                        required
+                                        autoComplete="new-password"
+                                        name="password"
+                                        passwordrules={passwordRules}
+                                    />
+                                    <InputError message={errors.password} />
+                                </div>
+                                <div className="grid gap-1.5">
+                                    <Label htmlFor="password_confirmation">
+                                        Confirmar senha
+                                    </Label>
+                                    <PasswordInput
+                                        id="password_confirmation"
+                                        required
+                                        autoComplete="new-password"
+                                        name="password_confirmation"
+                                        passwordrules={passwordRules}
+                                    />
+                                    <InputError
+                                        message={errors.password_confirmation}
+                                    />
+                                </div>
+                            </fieldset>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
-                                    Confirm password
-                                </Label>
-                                <PasswordInput
-                                    id="password_confirmation"
-                                    required
-                                    tabIndex={4}
-                                    autoComplete="new-password"
-                                    name="password_confirmation"
-                                    placeholder="Confirm password"
-                                    passwordrules={passwordRules}
-                                />
-                                <InputError
-                                    message={errors.password_confirmation}
-                                />
-                            </div>
-
-                            <Button
+                            <StoreButton
                                 type="submit"
-                                className="mt-2 w-full"
-                                tabIndex={5}
+                                className="w-full"
                                 data-test="register-user-button"
                             >
                                 {processing && <Spinner />}
-                                Create account
-                            </Button>
+                                Solicitar cadastro
+                            </StoreButton>
+                            <p className="text-sm text-muted-foreground">
+                                Depois de confirmar o seu e-mail, o cadastro é
+                                analisado pela loja. Você será avisado por
+                                e-mail quando for aprovado.
+                            </p>
                         </div>
 
                         <div className="text-center text-sm text-muted-foreground">
-                            Already have an account?{' '}
-                            <TextLink href={login()} tabIndex={6}>
-                                Log in
-                            </TextLink>
+                            Já tem uma conta?{' '}
+                            <TextLink href={login()}>Entrar</TextLink>
                         </div>
                     </>
                 )}
@@ -115,6 +130,6 @@ export default function Register({ passwordRules }: Props) {
 }
 
 Register.layout = {
-    title: 'Create an account',
-    description: 'Enter your details below to create your account',
+    title: 'Cadastre a sua empresa',
+    description: 'Informe os dados da empresa e do administrador do acesso',
 };
