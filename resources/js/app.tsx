@@ -2,9 +2,12 @@ import { createInertiaApp } from '@inertiajs/react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
+import AccountLayout from '@/layouts/account-layout';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
+import CheckoutLayout from '@/layouts/checkout-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import StoreLayout from '@/layouts/store-layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -18,6 +21,12 @@ void createInertiaApp({
                 return AuthLayout;
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];
+            case name.startsWith('checkout/'):
+                return CheckoutLayout;
+            case name.startsWith('account/'):
+                return AccountLayout;
+            case name.startsWith('store/'):
+                return StoreLayout;
             default:
                 return AppLayout;
         }
