@@ -1,0 +1,32 @@
+[
+    {
+        "id": 1,
+        "sku": "SKU-1",
+        "ean": "7890000000001",
+        "nome": "Água Mineral 500ml",
+        "descricao": "Água",
+        "marca": "Fonte",
+        "categoria": "Bebidas",
+        "ativo": true
+    },
+    {
+        "id": 2,
+        "sku": "SKU-2",
+        "ean": "7890000000002",
+        "nome": "Sabão em Pó 1kg",
+        "descricao": "Sabão",
+        "marca": "Limpa",
+        "categoria": "Limpeza",
+        "ativo": true
+    },
+    {
+        "id": 3,
+        "sku": "SKU-3",
+        "ean": "7890000000003",
+        "nome": "Produto Descontinuado",
+        "descricao": "Antigo",
+        "marca": "Velha",
+        "categoria": "Bebidas",
+        "ativo": false
+    }
+]

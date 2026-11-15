@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\CompanyRole;
+use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -34,6 +36,28 @@ class UserFactory extends Factory
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
         ];
+    }
+
+    /**
+     * Attach the user to a company as its owner.
+     */
+    public function ownerOf(Customer $customer): static
+    {
+        return $this->state([
+            'customer_id' => $customer->id,
+            'company_role' => CompanyRole::Owner,
+        ]);
+    }
+
+    /**
+     * Attach the user to a company as a regular member.
+     */
+    public function memberOf(Customer $customer): static
+    {
+        return $this->state([
+            'customer_id' => $customer->id,
+            'company_role' => CompanyRole::Member,
+        ]);
     }
 
     /**

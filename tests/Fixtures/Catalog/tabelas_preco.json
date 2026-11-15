@@ -1,0 +1,32 @@
+[
+    {
+        "codigo": "PADRAO",
+        "descricao": "Tabela padrão",
+        "itens": [
+            {
+                "produto_id": 1,
+                "preco": 3.07,
+                "preco_atacado": 2.76,
+                "qtd_minima_atacado": 50
+            },
+            {
+                "produto_id": 2,
+                "preco": 10.91
+            },
+            {
+                "produto_id": 3,
+                "preco": 1.0
+            }
+        ]
+    },
+    {
+        "codigo": "ATACADISTA",
+        "descricao": "Tabela atacadista",
+        "itens": [
+            {
+                "produto_id": 1,
+                "preco": 2.5
+            }
+        ]
+    }
+]

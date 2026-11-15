@@ -1,0 +1,9 @@
+[
+    {
+        "id": 1,
+        "produto_id": 1,
+        "percentual_desconto": 20,
+        "inicio": "2026-01-01",
+        "fim": "2030-12-31"
+    }
+]
