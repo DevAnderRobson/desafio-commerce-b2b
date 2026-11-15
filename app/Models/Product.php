@@ -66,6 +66,22 @@ class Product extends Model
     }
 
     /**
+     * @return HasMany<ProductImage, $this>
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('position');
+    }
+
+    /**
+     * @return HasMany<ProductAttribute, $this>
+     */
+    public function specifications(): HasMany
+    {
+        return $this->hasMany(ProductAttribute::class)->orderBy('position');
+    }
+
+    /**
      * @return HasMany<Promotion, $this>
      */
     public function promotions(): HasMany

@@ -14,7 +14,7 @@ Base técnica e visual da loja: layouts, tokens de design, banco com os dados do
 - [x] Adicionar breakpoint ultrawide (`3xl`) e container máximo.
 - [x] `StoreLayout`, `CheckoutLayout`, `AccountLayout` (ver [01](../01-rotas-e-telas.md)).
 - [x] Componentes base: botão, campo com label, card de produto, selo de preço, skeleton, estado vazio, toast.
-- [ ] Separar rotas (pendente; fica com Claude Code, depende de `routes/web.php`): arquivos/grupos de rota para loja e conta; renomear `dashboard` para `account.dashboard` com redirecionamento.
+- [x] Separar rotas: `routes/web.php` agora só inclui `store.php`, `account.php` e `settings.php`; `dashboard` virou `account.dashboard` (`/conta`, página `account/dashboard`), com redirecionamento 301 de `/dashboard`, `config/fortify.php` (`home`) e testes de auth ajustados.
 
 Revisão da entrega do Antigravity (worktree `onda1-frontend-base`, ainda **não integrado** ao `main`):
 
@@ -33,6 +33,7 @@ Regras / atenção:
 - [x] Migrations/models/factories/seeders das entidades do catálogo (customers, products, categories, stocks, price_tables, price_table_items, promotions, payment_terms).
 - [x] Relacionar `users` a `customers` (vários usuários por empresa; papel dono/membro em `users.company_role`, **sem** `owner_user_id`); `customers.approval_status` (pending/approved/rejected) e `duplicate_of_customer_id` (índice único parcial do CNPJ só para o cadastro original).
 - [x] Usuários de teste (`DemoUsersSeeder`, senha `password`): `dono1..3@example.com`, `membro1@example.com`, `pendente@example.com`, `duplicado@example.com`.
+- [x] Tabelas `product_images` e `product_attributes` (models `ProductImage`/`ProductAttribute`, relações `images()` e `specifications()` no `Product`).
 - [ ] Seeders de demonstração restantes (**delegar ao Antigravity**): imagens de exemplo, atributos genéricos, avaliações e pedidos entregues fictícios (estes dois últimos dependem de models das ondas 4 e 7).
 - [ ] Comando `customers:approve {id}` (movido para a onda 8.A, junto com o fluxo de cadastro e e-mails) para aprovar/recusar enquanto não há painel de gestão.
 - [x] Copiar os JSONs de `docs/data` para `database/seeders/data/` (D26) e criar `CatalogImporter` idempotente, usado pelo `DatabaseSeeder` e por `php artisan catalog:import {--path=}`, com relatório de inconsistências. Nada em runtime lê `docs/`. **Apenas copiar; jamais alterar, mover ou reformatar os arquivos de `docs/data`** (D26).

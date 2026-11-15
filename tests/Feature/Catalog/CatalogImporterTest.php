@@ -8,6 +8,8 @@ use App\Models\PaymentTerm;
 use App\Models\PriceTable;
 use App\Models\PriceTableItem;
 use App\Models\Product;
+use App\Models\ProductAttribute;
+use App\Models\ProductImage;
 use App\Models\Promotion;
 use App\Models\Stock;
 use Illuminate\Support\Facades\File;
@@ -136,4 +138,14 @@ it('imports through the artisan command and fails with a clear message on bad in
     $this->artisan('catalog:import', ['--path' => '/caminho/inexistente'])
         ->expectsOutputToContain('Catalog file not found')
         ->assertFailed();
+});
+
+it('relates a product to its images and specifications ordered by position', function () {
+    $product = Product::factory()->create();
+    ProductImage::factory()->for($product)->create(['position' => 2, 'alt' => 'second']);
+    ProductImage::factory()->for($product)->create(['position' => 1, 'alt' => 'first']);
+    ProductAttribute::factory()->for($product)->create(['position' => 1, 'name' => 'Peso']);
+
+    expect($product->images->pluck('alt')->all())->toBe(['first', 'second'])
+        ->and($product->specifications->pluck('name')->all())->toBe(['Peso']);
 });
