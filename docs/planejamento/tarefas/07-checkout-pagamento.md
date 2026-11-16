@@ -40,7 +40,7 @@ Revisar o pedido, escolher a forma de pagamento e criar o pedido; o pagamento é
 ### 7.4 Tela temporária de acompanhamento
 
 - [x] `orders.processing`: mensagem clara de "estamos processando seu pagamento; você pode sair desta página", número do pedido, passos.
-- [x] Atualização por polling do Inertia (intervalo crescente) ou broadcast; para ao chegar em estado final e leva a `orders.confirmation`.
+- [x] Atualização por polling do Inertia (intervalo crescente) ou broadcast _(feito os dois: Reverb em tempo real, polling como fallback, D37)_; para ao chegar em estado final e leva a `orders.confirmation`.
 - [x] Timeout amigável: após X minutos, orientar ("avisaremos por e-mail") sem prender o cliente.
 - [x] Acessível: `aria-live` para mudança de estado; sem spinner infinito sem contexto.
 - [x] Tela de resultado: sucesso (próximos passos, resumo), recusa (tentar outra forma sem refazer o pedido), pendente.

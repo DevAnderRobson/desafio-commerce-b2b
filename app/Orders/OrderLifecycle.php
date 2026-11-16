@@ -3,6 +3,7 @@
 namespace App\Orders;
 
 use App\Enums\OrderStatus;
+use App\Events\OrderUpdated;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -39,6 +40,9 @@ class OrderLifecycle
             $locked->save();
 
             Log::info('Transição de pedido.', ['order' => $locked->number, 'from' => $previous->value, 'to' => $next->value]);
+
+            $payment = $locked->payments()->latest('id')->first();
+            OrderUpdated::dispatch($locked, $payment?->status, $payment->attempts ?? 0);
 
             return $locked;
         });

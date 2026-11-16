@@ -4,6 +4,7 @@ namespace App\Orders;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Events\OrderUpdated;
 use App\Mail\OrderConfirmedMail;
 use App\Mail\PaymentNotCompletedMail;
 use App\Messaging\Contracts\EventPublisher;
@@ -46,6 +47,7 @@ class PaymentProcessor
         }
 
         $payment->increment('attempts');
+        OrderUpdated::dispatch($order, PaymentStatus::Pending, $payment->attempts);
 
         $result = $this->gateway->charge($order, $payment->refresh());
 
