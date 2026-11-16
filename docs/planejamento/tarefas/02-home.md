@@ -47,5 +47,5 @@ Pontos de atenção: LGPD (texto de consentimento, descadastro); confirmação p
 
 ## Definição de pronto
 
-- [ ] Revisão Impeccable e dos breakpoints no navegador (você).
+- [x] Revisão Impeccable e dos breakpoints no navegador (você).
 - [x] Itens marcados · ci:check verde.

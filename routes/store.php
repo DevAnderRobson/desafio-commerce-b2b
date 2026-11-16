@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NewsletterController;
@@ -32,6 +33,12 @@ Route::get('produtos/{slug}', [ProductController::class, 'show'])
     ->name('products.show');
 
 Route::middleware('auth')->group(function () {
+    Route::get('carrinho', [CartController::class, 'show'])->name('cart.show');
+    Route::post('carrinho/itens', [CartController::class, 'store'])->middleware('throttle:cart')->name('cart.items.store');
+    Route::patch('carrinho/itens/{item}', [CartController::class, 'update'])->middleware('throttle:cart')->name('cart.items.update');
+    Route::delete('carrinho/itens/{item}', [CartController::class, 'destroy'])->name('cart.items.destroy');
+    Route::delete('carrinho', [CartController::class, 'clear'])->name('cart.clear');
+
     Route::post('lista-de-desejos/{product}', [WishlistController::class, 'store'])->name('wishlist.store');
     Route::delete('lista-de-desejos/{product}', [WishlistController::class, 'destroy'])->name('wishlist.destroy');
     Route::match(['post', 'put'], 'produtos/{product}/avaliacoes', [ReviewController::class, 'store'])

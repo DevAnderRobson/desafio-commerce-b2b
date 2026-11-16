@@ -37,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
     {
         RateLimiter::for('search', fn (Request $request): Limit => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('reviews', fn (Request $request): Limit => Limit::perMinute(10)->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('cart', fn (Request $request): Limit => Limit::perMinute(60)->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('newsletter', fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()));
     }
 

@@ -35,7 +35,7 @@ Regras / atenção:
 - [x] Usuários de teste (`DemoUsersSeeder`, senha `password`): `dono1..3@example.com`, `membro1@example.com`, `pendente@example.com`, `duplicado@example.com`.
 - [x] Tabelas `product_images` e `product_attributes` (models `ProductImage`/`ProductAttribute`, relações `images()` e `specifications()` no `Product`).
 - [x] `DemoCatalogSeeder` (Antigravity, revisado): 3 imagens SVG neutras por produto ativo (`public/demo/products`) e 5 atributos pt-BR por produto ativo.
-- [ ] Avaliações e pedidos entregues fictícios: dependem de models das ondas 4 e 7.
+- [x] Avaliações e pedidos entregues fictícios: dependem de models das ondas 4 e 7. _(feito na onda 4: `DemoReviewsSeeder`; pedidos completos na onda 7)_
 - [ ] Comando `customers:approve {id}` (movido para a onda 8.A, junto com o fluxo de cadastro e e-mails) para aprovar/recusar enquanto não há painel de gestão.
 - [x] Copiar os JSONs de `docs/data` para `database/seeders/data/` (D26) e criar `CatalogImporter` idempotente, usado pelo `DatabaseSeeder` e por `php artisan catalog:import {--path=}`, com relatório de inconsistências. Nada em runtime lê `docs/`. **Apenas copiar; jamais alterar, mover ou reformatar os arquivos de `docs/data`** (D26).
 - [x] **Banco de testes/CI em PostgreSQL (D28):** adicionar serviço Postgres ao `.github/workflows/tests.yml` e alinhar `.env.example`/`phpunit.xml`; confirmar `ci:check` verde localmente e no CI.
@@ -70,4 +70,4 @@ Regras / atenção:
 
 ## Definição de pronto
 
-- [ ] Itens marcados · `sail composer run ci:check` verde · layouts revisados nos breakpoints.
+- [x] Itens marcados · `sail composer run ci:check` verde · layouts revisados nos breakpoints.

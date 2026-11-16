@@ -38,6 +38,7 @@ class ProductController extends Controller
                 'login' => route('login', absolute: false),
                 'wishlistAdd' => route('wishlist.store', $product, false),
                 'wishlistRemove' => route('wishlist.destroy', $product, false),
+                'cartAdd' => route('cart.items.store', absolute: false),
                 'reviewSubmit' => route('reviews.store', $product, false),
             ],
             'reviews' => Inertia::defer(fn (): array => $this->reviews($request, $product), 'reviews'),

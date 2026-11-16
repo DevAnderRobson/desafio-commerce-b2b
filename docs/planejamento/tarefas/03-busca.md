@@ -58,5 +58,5 @@ A requisição ao backend durante a digitação ocorre **somente após 3 segundo
 
 ## Definição de pronto
 
-- [ ] Revisão Impeccable e breakpoints no navegador (você).
+- [x] Revisão Impeccable e breakpoints no navegador (você).
 - [x] Itens marcados · ci:check verde.
