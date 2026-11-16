@@ -306,13 +306,13 @@ export function ProductCard(props: ProductCardProps) {
                             loading={isAddingToCart}
                             loadingText="Adicionando..."
                             onClick={() => onAddToCart?.(id)}
-                            className="w-full"
+                            className="h-auto min-h-11 w-full py-2 leading-tight whitespace-normal"
                         >
                             <ShoppingCart
                                 className="size-4 shrink-0"
                                 aria-hidden="true"
                             />
-                            <span>
+                            <span className="text-center text-balance">
                                 {isAvailableInStock
                                     ? addToCartLabel
                                     : 'Sem estoque'}

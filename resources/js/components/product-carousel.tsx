@@ -9,7 +9,8 @@ import {
     type ReactNode,
 } from 'react';
 import { StoreButton } from '@/components/button';
-import { ProductCard, type ProductCardProps } from '@/components/product-card';
+import { type ProductCardProps } from '@/components/product-card';
+import { QuickAddProductCard } from '@/components/quick-add-product-card';
 import { cn } from '@/lib/utils';
 
 export type ProductCarouselItem = ProductCardProps;
@@ -22,7 +23,6 @@ export type ProductCarouselProps = {
     items: ProductCarouselItem[];
     headingLevel?: 'h2' | 'h3';
     cardHeadingLevel?: 'h2' | 'h3';
-    onAddToCart?: ProductCardProps['onAddToCart'];
     headerActionSlot?: ReactNode;
     className?: string;
 };
@@ -56,7 +56,6 @@ export function ProductCarousel({
     items,
     headingLevel = 'h2',
     cardHeadingLevel = 'h3',
-    onAddToCart,
     headerActionSlot,
     className,
 }: ProductCarouselProps) {
@@ -249,10 +248,9 @@ export function ProductCarousel({
             >
                 {items.map((item) => (
                     <li key={item.id} className={CAROUSEL_ITEM_WIDTH_CLASSES}>
-                        <ProductCard
+                        <QuickAddProductCard
                             {...item}
                             headingLevel={cardHeadingLevel}
-                            onAddToCart={onAddToCart}
                         />
                     </li>
                 ))}

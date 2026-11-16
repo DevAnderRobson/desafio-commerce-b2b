@@ -5,7 +5,7 @@ import { formatCentsToBRL, formatInteger } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const priceBadgeVariants = cva(
-    'inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-xs font-semibold tabular-nums transition-colors duration-150 ease-out',
+    'inline-flex max-w-full items-center gap-1 rounded-sm border px-2 py-0.5 text-xs font-semibold whitespace-normal tabular-nums transition-colors duration-150 ease-out',
     {
         variants: {
             variant: {

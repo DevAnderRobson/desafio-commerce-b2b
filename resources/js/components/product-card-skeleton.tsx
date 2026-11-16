@@ -61,10 +61,7 @@ export function ProductGridSkeleton({
         <div
             aria-busy="true"
             aria-live="polite"
-            className={cn(
-                'grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6',
-                className,
-            )}
+            className={cn(PRODUCT_GRID_CLASSES, className)}
         >
             {Array.from({ length: count }, (_, index) => (
                 <ProductCardSkeleton key={index} showAction={showAction} />
@@ -74,3 +71,10 @@ export function ProductGridSkeleton({
 }
 
 export default ProductCardSkeleton;
+
+/**
+ * Grade de produtos que se adapta à largura disponível (com ou sem barra lateral): cada card
+ * tem no mínimo 14,5 rem, então nenhuma largura de tela espreme o conteúdo do card.
+ */
+export const PRODUCT_GRID_CLASSES =
+    'grid grid-cols-[repeat(auto-fill,minmax(min(100%,14.5rem),1fr))] gap-4';

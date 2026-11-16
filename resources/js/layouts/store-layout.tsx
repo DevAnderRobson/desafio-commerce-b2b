@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import {
     Building2,
     Home,
@@ -8,10 +8,18 @@ import {
     User as UserIcon,
     X,
 } from 'lucide-react';
-import { createContext, useContext, useId, useState } from 'react';
+import {
+    createContext,
+    useContext,
+    useEffect,
+    useId,
+    useRef,
+    useState,
+} from 'react';
 import AppLogo from '@/components/app-logo';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { StoreButton } from '@/components/button';
+import { CartBadge } from '@/components/cart-badge';
 import { NewsletterForm } from '@/components/newsletter-form';
 import { SearchBox } from '@/components/search-box';
 import {
@@ -26,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { home, login } from '@/routes';
 import searchRoutes from '@/routes/search';
 import type { NavItem, StoreLayoutProps, User } from '@/types';
+import type { SharedCart } from '@/types/cart';
 
 const StoreLayoutContext = createContext(false);
 
@@ -74,6 +83,9 @@ export function StoreLayout({
     const isInsideStoreLayout = useContext(StoreLayoutContext);
     const page = usePage();
     const user = (page.props.auth as { user?: User | null } | undefined)?.user;
+    const sharedCart = page.props.cart as SharedCart | undefined;
+    const resolvedCartCount = cartCount ?? sharedCart?.count ?? 0;
+    const lastCartReloadAtRef = useRef<number>(0);
     const pageSearchQuery =
         typeof page.props.query === 'string' ? page.props.query : '';
     const resolvedSearchQuery = searchQuery ?? pageSearchQuery;
@@ -81,6 +93,46 @@ export function StoreLayout({
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
     const searchInputId = useId();
     const mobileSearchInputId = useId();
+
+    useEffect(() => {
+        if (isInsideStoreLayout || !user) {
+            return;
+        }
+
+        const revalidateCartCount = () => {
+            if (
+                document.visibilityState === 'hidden' ||
+                router.hasPendingOptimistic()
+            ) {
+                return;
+            }
+
+            const now = Date.now();
+            if (now - lastCartReloadAtRef.current < 30_000) {
+                return;
+            }
+
+            lastCartReloadAtRef.current = now;
+            router.reload({ only: ['cart'] });
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                revalidateCartCount();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('focus', revalidateCartCount);
+
+        return () => {
+            document.removeEventListener(
+                'visibilitychange',
+                handleVisibilityChange,
+            );
+            window.removeEventListener('focus', revalidateCartCount);
+        };
+    }, [isInsideStoreLayout, user]);
 
     if (isInsideStoreLayout) {
         return <>{children}</>;
@@ -196,6 +248,13 @@ export function StoreLayout({
                                                     <span>
                                                         Carrinho de compras
                                                     </span>
+                                                    <CartBadge
+                                                        count={
+                                                            resolvedCartCount
+                                                        }
+                                                        announceChanges={false}
+                                                        className="ml-auto"
+                                                    />
                                                 </Link>
                                             </div>
                                         </nav>
@@ -324,20 +383,7 @@ export function StoreLayout({
                                         <span className="hidden text-sm font-medium sm:inline">
                                             Carrinho
                                         </span>
-                                        <span
-                                            aria-live="polite"
-                                            aria-atomic="true"
-                                            className={cn(
-                                                'inline-flex items-center justify-center rounded-sm bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground tabular-nums',
-                                                typeof cartCount === 'number'
-                                                    ? 'ml-0.5'
-                                                    : 'sr-only',
-                                            )}
-                                        >
-                                            {typeof cartCount === 'number'
-                                                ? cartCount
-                                                : '0 itens no carrinho'}
-                                        </span>
+                                        <CartBadge count={resolvedCartCount} />
                                     </Link>
                                 </StoreButton>
                             )}

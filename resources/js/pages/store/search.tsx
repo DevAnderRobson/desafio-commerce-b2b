@@ -10,8 +10,11 @@ import {
 import { useCallback, useEffect, useId, useState } from 'react';
 import { StoreButton } from '@/components/button';
 import { EmptyState } from '@/components/empty-state';
-import { ProductCard } from '@/components/product-card';
-import { ProductGridSkeleton } from '@/components/product-card-skeleton';
+import { QuickAddProductCard } from '@/components/quick-add-product-card';
+import {
+    PRODUCT_GRID_CLASSES,
+    ProductGridSkeleton,
+} from '@/components/product-card-skeleton';
 import { Label } from '@/components/ui/label';
 import {
     Sheet,
@@ -629,9 +632,9 @@ export default function StoreSearchPage({
                             />
                         ) : products.data.length > 0 ? (
                             <>
-                                <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
+                                <div className={PRODUCT_GRID_CLASSES}>
                                     {products.data.map((product) => (
-                                        <ProductCard
+                                        <QuickAddProductCard
                                             key={product.id}
                                             {...product}
                                             headingLevel="h3"

@@ -1,4 +1,4 @@
-import { Deferred, Head, Link, usePage } from '@inertiajs/react';
+import { Deferred, Head, Link, router, usePage } from '@inertiajs/react';
 import { useCallback } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ProductBuyBox } from '@/components/product-buy-box';
@@ -12,12 +12,14 @@ import { storeToast } from '@/components/toast';
 import { WishlistButton } from '@/components/wishlist-button';
 import { home } from '@/routes';
 import type { BreadcrumbItem, User } from '@/types';
+import type { SharedCart } from '@/types/cart';
 import type { ProductPageProps } from '@/types/product';
 
 export type ProductRoutes = {
     login: string;
     wishlistAdd: string;
     wishlistRemove: string;
+    cartAdd: string;
     reviewSubmit: string;
 };
 
@@ -66,35 +68,84 @@ export default function StoreProductPage({
         },
     ];
 
-    // Stub da Onda 4 para "Adicionar ao carrinho" (a integração real com backend entra na Onda 5)
     const handleAddToCart = useCallback(
-        async (quantity: number): Promise<void> => {
+        (quantity: number): Promise<void> => {
             if (
                 !product.canPurchase ||
                 product.availability.status === 'out_of_stock' ||
                 quantity > product.availability.quantity
             ) {
-                throw new Error(
-                    'Quantidade indisponível no estoque atual deste produto.',
+                return Promise.reject(
+                    new Error(
+                        'Quantidade indisponível no estoque atual deste produto.',
+                    ),
                 );
             }
 
-            await new Promise<void>((resolve) => {
-                setTimeout(resolve, 200);
-            });
+            return new Promise<void>((resolve, reject) => {
+                let settled = false;
 
-            storeToast.success(
-                `${quantity} ${quantity === 1 ? 'unidade adicionada' : 'unidades adicionadas'} ao carrinho.`,
-                {
-                    description: product.name,
-                },
-            );
+                router
+                    .optimistic<{ cart?: SharedCart }>((props) => ({
+                        cart: {
+                            ...props.cart,
+                            count: (props.cart?.count ?? 0) + quantity,
+                        },
+                    }))
+                    .post(
+                        routes.cartAdd,
+                        {
+                            product_id: product.id,
+                            quantity,
+                        },
+                        {
+                            preserveScroll: true,
+                            onSuccess: () => {
+                                settled = true;
+                                storeToast.success(
+                                    `${quantity} ${quantity === 1 ? 'unidade adicionada' : 'unidades adicionadas'} ao carrinho.`,
+                                    {
+                                        description: product.name,
+                                    },
+                                );
+                                resolve();
+                            },
+                            onError: (errors) => {
+                                settled = true;
+                                const message =
+                                    errors.quantity ||
+                                    errors.product_id ||
+                                    Object.values(errors)[0] ||
+                                    'Não foi possível adicionar ao carrinho. Verifique a quantidade em estoque e tente novamente.';
+                                reject(new Error(message));
+                            },
+                            onCancel: () => {
+                                if (!settled) {
+                                    settled = true;
+                                    reject(
+                                        new Error(
+                                            'A adição ao carrinho foi cancelada. Tente novamente.',
+                                        ),
+                                    );
+                                }
+                            },
+                            onFinish: () => {
+                                if (!settled) {
+                                    settled = true;
+                                    resolve();
+                                }
+                            },
+                        },
+                    );
+            });
         },
         [
             product.availability.quantity,
             product.availability.status,
             product.canPurchase,
+            product.id,
             product.name,
+            routes.cartAdd,
         ],
     );
 
