@@ -47,4 +47,4 @@ Carrinho persistente **por usuário** e navbar com contador animado em tempo rea
 
 ## Definição de pronto
 
-- [ ] Itens marcados · ci:check verde · animação revisada com e sem reduced motion.
+- [x] Itens marcados · ci:check verde · animação revisada com e sem reduced motion.

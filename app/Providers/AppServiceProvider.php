@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Checkout\CepLookup;
+use App\Checkout\FreightCalculator;
+use App\Checkout\SimulatedFreightCalculator;
+use App\Checkout\ViaCepLookup;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -20,7 +24,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(FreightCalculator::class, SimulatedFreightCalculator::class);
+        $this->app->bind(CepLookup::class, ViaCepLookup::class);
     }
 
     /**
@@ -38,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('search', fn (Request $request): Limit => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('reviews', fn (Request $request): Limit => Limit::perMinute(10)->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('cart', fn (Request $request): Limit => Limit::perMinute(60)->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('cep', fn (Request $request): Limit => Limit::perMinute(30)->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('newsletter', fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()));
     }
 

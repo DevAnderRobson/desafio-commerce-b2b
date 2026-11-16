@@ -65,4 +65,4 @@ Página que permite decidir a compra: ver imagens, preço do cliente, ficha téc
 
 ## Definição de pronto
 
-- [ ] Itens marcados · ci:check verde · galeria testada em toque, mouse, teclado e TV (foco).
+- [x] Itens marcados · ci:check verde · galeria testada em toque, mouse, teclado e TV (foco).

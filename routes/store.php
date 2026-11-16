@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\AddressController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CepController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ProductController;
@@ -38,6 +41,15 @@ Route::middleware('auth')->group(function () {
     Route::patch('carrinho/itens/{item}', [CartController::class, 'update'])->middleware('throttle:cart')->name('cart.items.update');
     Route::delete('carrinho/itens/{item}', [CartController::class, 'destroy'])->name('cart.items.destroy');
     Route::delete('carrinho', [CartController::class, 'clear'])->name('cart.clear');
+
+    Route::prefix('checkout')->group(function () {
+        Route::get('entrega', [CheckoutController::class, 'delivery'])->name('checkout.delivery');
+        Route::put('entrega', [CheckoutController::class, 'confirm'])->name('checkout.delivery.confirm');
+        Route::post('enderecos', [AddressController::class, 'store'])->name('addresses.store');
+        Route::put('enderecos/{address}', [AddressController::class, 'update'])->name('addresses.update');
+        Route::delete('enderecos/{address}', [AddressController::class, 'destroy'])->name('addresses.destroy');
+        Route::get('cep/{cep}', CepController::class)->middleware('throttle:cep')->name('checkout.cep');
+    });
 
     Route::post('lista-de-desejos/{product}', [WishlistController::class, 'store'])->name('wishlist.store');
     Route::delete('lista-de-desejos/{product}', [WishlistController::class, 'destroy'])->name('wishlist.destroy');
