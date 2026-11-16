@@ -9,7 +9,12 @@ use App\Checkout\CheckoutSelection;
 use App\Checkout\FreightCalculator;
 use App\Checkout\FreightOption;
 use App\Checkout\FreightUnavailable;
+use App\Http\Requests\PlaceOrderRequest;
 use App\Models\Address;
+use App\Orders\OrderCannotBePlaced;
+use App\Orders\OrderCreator;
+use App\Orders\PaymentTermOption;
+use App\Orders\PaymentTermOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -23,6 +28,8 @@ class CheckoutController extends Controller
         private CartTotals $totals,
         private FreightCalculator $freight,
         private CheckoutSelection $selection,
+        private PaymentTermOptions $terms,
+        private OrderCreator $creator,
     ) {}
 
     public function delivery(Request $request): Response|RedirectResponse
@@ -67,8 +74,76 @@ class CheckoutController extends Controller
         ]);
     }
 
+    public function payment(Request $request): Response|RedirectResponse
+    {
+        $user = $request->user();
+        $summary = $this->totals->summarize($user);
+        $address = $this->savedAddress($user->customer_id);
+        $option = $address === null ? null : $this->savedFreight($address, $summary);
+
+        if ($user->cannot('checkout') || $summary->isEmpty() || $summary->hasIssues()) {
+            return to_route('cart.show');
+        }
+
+        if ($address === null || $option === null) {
+            return to_route('checkout.delivery');
+        }
+
+        $terms = array_map(fn (PaymentTermOption $term): array => $term->toArray(), $this->terms->for($user->customer, $summary->subtotalCents, $option->priceCents));
+        $firstAvailable = collect($terms)->firstWhere('available', true);
+
+        return Inertia::render('checkout/payment', [
+            'summary' => [
+                'items' => $this->summary($summary)['items'],
+                'count' => $summary->unitCount(),
+                'totals' => [
+                    'subtotalCents' => $summary->subtotalCents,
+                    'savingsCents' => $summary->savingsCents,
+                    'shippingCents' => $option->priceCents,
+                ],
+            ],
+            'address' => $this->address($address),
+            'freight' => [
+                'label' => $option->label,
+                'priceCents' => $option->priceCents,
+                'deliveryDaysMin' => $option->deliveryDaysMin,
+                'deliveryDaysMax' => $option->deliveryDaysMax,
+                'isFree' => $option->isFree,
+            ],
+            'paymentTerms' => $terms,
+            'selectedTermCode' => $firstAvailable['code'] ?? null,
+            'idempotencyKey' => $this->selection->idempotencyKey(),
+            'routes' => [
+                'confirm' => route('checkout.place', absolute: false),
+                'delivery' => route('checkout.delivery', absolute: false),
+                'cart' => route('cart.show', absolute: false),
+            ],
+        ]);
+    }
+
+    public function place(PlaceOrderRequest $request): RedirectResponse
+    {
+        $user = $request->user();
+        $address = $this->savedAddress($user->customer_id);
+        $freightCode = $this->selection->freightCode();
+
+        if ($address === null || $freightCode === null) {
+            return to_route('checkout.delivery');
+        }
+
+        try {
+            $order = $this->creator->create($user, $address, $freightCode, $request->string('payment_term_code')->toString(), $request->string('idempotency_key')->toString());
+        } catch (OrderCannotBePlaced $exception) {
+            throw ValidationException::withMessages([$exception->field => $exception->getMessage()]);
+        }
+
+        $this->selection->finish();
+
+        return to_route('orders.processing', $order->number);
+    }
+
     /**
-     * Saves the chosen address and freight option. The payment step (wave 7) continues from here.
+     * Saves the chosen address and freight option and moves on to the payment step.
      */
     public function confirm(Request $request): RedirectResponse
     {
@@ -94,9 +169,21 @@ class CheckoutController extends Controller
         $address->forceFill(['last_used_at' => now()])->save();
         $this->selection->remember($address->id, $data['freight_code']);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Entrega confirmada. O pagamento será liberado na próxima etapa.']);
+        return to_route('checkout.payment');
+    }
 
-        return to_route('checkout.delivery');
+    private function savedAddress(?int $customerId): ?Address
+    {
+        $id = $this->selection->addressId();
+
+        return $id === null ? null : Address::query()->where('customer_id', $customerId)->whereKey($id)->first();
+    }
+
+    private function savedFreight(Address $address, CartSummary $summary): ?FreightOption
+    {
+        $quote = $this->quote($address, $summary);
+
+        return $this->optionByCode($quote['options'], $this->selection->freightCode());
     }
 
     /**

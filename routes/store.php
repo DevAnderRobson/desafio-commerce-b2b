@@ -7,6 +7,7 @@ use App\Http\Controllers\CepController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
@@ -42,9 +43,17 @@ Route::middleware('auth')->group(function () {
     Route::delete('carrinho/itens/{item}', [CartController::class, 'destroy'])->name('cart.items.destroy');
     Route::delete('carrinho', [CartController::class, 'clear'])->name('cart.clear');
 
+    Route::prefix('pedidos')->group(function () {
+        Route::get('{order:number}/acompanhamento', [OrderController::class, 'processing'])->name('orders.processing');
+        Route::get('{order:number}', [OrderController::class, 'confirmation'])->name('orders.confirmation');
+        Route::post('{order:number}/pagamento', [OrderController::class, 'retry'])->middleware('throttle:cart')->name('orders.retry');
+    });
+
     Route::prefix('checkout')->group(function () {
         Route::get('entrega', [CheckoutController::class, 'delivery'])->name('checkout.delivery');
         Route::put('entrega', [CheckoutController::class, 'confirm'])->name('checkout.delivery.confirm');
+        Route::get('pagamento', [CheckoutController::class, 'payment'])->name('checkout.payment');
+        Route::post('pedido', [CheckoutController::class, 'place'])->middleware('throttle:cart')->name('checkout.place');
         Route::post('enderecos', [AddressController::class, 'store'])->name('addresses.store');
         Route::put('enderecos/{address}', [AddressController::class, 'update'])->name('addresses.update');
         Route::delete('enderecos/{address}', [AddressController::class, 'destroy'])->name('addresses.destroy');

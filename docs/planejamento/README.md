@@ -37,7 +37,7 @@ Ordem sugerida; cada onda depende das anteriores.
 | 4    | [04-detalhe-do-produto.md](tarefas/04-detalhe-do-produto.md)   | Galeria com zoom, ficha, compartilhar, desejos, avaliações                | ✅     |
 | 5    | [05-carrinho-e-navbar.md](tarefas/05-carrinho-e-navbar.md)     | Carrinho persistente, contador animado no navbar                          | ✅     |
 | 6    | [06-checkout-entrega.md](tarefas/06-checkout-entrega.md)       | Endereço inline, frete (cupom só visual)                                  | 🟨     |
-| 7    | [07-checkout-pagamento.md](tarefas/07-checkout-pagamento.md)   | Revisão, pagamento, processamento assíncrono, tela de acompanhamento      | ⬜     |
+| 7    | [07-checkout-pagamento.md](tarefas/07-checkout-pagamento.md)   | Revisão, pagamento, processamento assíncrono, tela de acompanhamento      | 🟨     |
 | 8    | [08-area-do-cliente.md](tarefas/08-area-do-cliente.md)         | 8.A cadastro/aprovação/usuários (logo após a onda 1); 8.B área do cliente | ⬜     |
 | 9    | [09-gestao-da-loja-futuro.md](09-gestao-da-loja-futuro.md)     | Painel administrativo (apenas rascunho)                                   | ⬜     |
 

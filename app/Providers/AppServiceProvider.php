@@ -7,6 +7,8 @@ use App\Checkout\FreightCalculator;
 use App\Checkout\SimulatedFreightCalculator;
 use App\Checkout\ViaCepLookup;
 use App\Models\User;
+use App\Payments\PaymentGateway;
+use App\Payments\SimulatedPaymentGateway;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -26,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(FreightCalculator::class, SimulatedFreightCalculator::class);
         $this->app->bind(CepLookup::class, ViaCepLookup::class);
+        $this->app->bind(PaymentGateway::class, SimulatedPaymentGateway::class);
     }
 
     /**

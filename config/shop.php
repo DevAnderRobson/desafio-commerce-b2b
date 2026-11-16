@@ -19,6 +19,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Payment (simulated gateway, D12)
+    |--------------------------------------------------------------------------
+    |
+    | outcome: approved | refused | transient | flaky. delay_seconds slows the gateway down so the
+    | processing screen can be seen. Pending orders older than expire_minutes are expired.
+    |
+    */
+
+    'payment' => [
+        'outcome' => env('SHOP_PAYMENT_OUTCOME', 'approved'),
+        'delay_seconds' => (int) env('SHOP_PAYMENT_DELAY', 3),
+        'expire_minutes' => (int) env('SHOP_PAYMENT_EXPIRE_MINUTES', 30),
+        'tracking_timeout_minutes' => 3,
+        'polling_intervals_ms' => [1500, 2500, 4000, 6000],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Postal code lookup
     |--------------------------------------------------------------------------
     */

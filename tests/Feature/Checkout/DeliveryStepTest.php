@@ -199,7 +199,7 @@ describe('confirmation', function () {
         $address = Address::factory()->for($user->customer)->create();
 
         $this->actingAs($user)->put(route('checkout.delivery.confirm'), ['address_id' => $address->id, 'freight_code' => 'express'])
-            ->assertRedirect(route('checkout.delivery'));
+            ->assertRedirect(route('checkout.payment'));
 
         expect($address->fresh()->last_used_at)->not->toBeNull();
         $this->actingAs($user)->get(route('checkout.delivery'))->assertInertia(fn (AssertableInertia $page) => $page->where('selectedFreightCode', 'express'));

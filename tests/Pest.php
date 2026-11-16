@@ -109,3 +109,5 @@ function fakeLogChannel(string $channel): TestHandler
     /** @var TestHandler */
     return Log::channel($channel)->getLogger()->getHandlers()[0];
 }
+
+require_once __DIR__.'/Feature/Orders/helpers.php';
