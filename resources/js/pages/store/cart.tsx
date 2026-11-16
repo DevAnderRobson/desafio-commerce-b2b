@@ -984,11 +984,6 @@ export default function StoreCartPage({ cart, routes }: CartPageProps) {
                     !isEmpty && 'pb-28 lg:pb-0',
                 )}
             >
-                {/* Breadcrumb */}
-                <div className="border-b border-border/70 pb-3">
-                    <Breadcrumbs breadcrumbs={breadcrumbs} />
-                </div>
-
                 {/* Cabeçalho da página com h1 e ação secundária "Esvaziar carrinho" */}
                 <header className="flex flex-wrap items-end justify-between gap-4">
                     <div className="flex flex-col gap-1">

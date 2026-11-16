@@ -5,7 +5,6 @@ import { initializeTheme } from '@/hooks/use-appearance';
 import AccountLayout from '@/layouts/account-layout';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
-import CheckoutLayout from '@/layouts/checkout-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import StoreLayout from '@/layouts/store-layout';
 
@@ -22,7 +21,10 @@ void createInertiaApp({
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];
             case name.startsWith('checkout/'):
-                return CheckoutLayout;
+                // As páginas do checkout renderizam o próprio CheckoutLayout (com resumo e barra
+                // inferior como props). `setLayoutProps` com elementos React recriados a cada
+                // render causava re-renderizações em loop.
+                return null;
             case name.startsWith('account/'):
                 return AccountLayout;
             case name.startsWith('store/'):
