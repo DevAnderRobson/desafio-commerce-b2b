@@ -92,3 +92,27 @@ export type CartPageProps = {
     cart: CartView;
     routes: CartRoutes;
 };
+
+/** Mini carrinho do navbar. Prop compartilhada OPCIONAL (`miniCart`): só chega ao pedir `only: ['miniCart']`. */
+export type MiniCartItem = {
+    id: number;
+    name: string;
+    href: string;
+    imageUrl: string | null;
+    imageAlt: string;
+    quantity: number;
+    unitPriceCents: number;
+    lineTotalCents: number;
+    /** Item indisponível (continua listado, sem valor). */
+    hasIssue: boolean;
+};
+
+export type MiniCartData = {
+    items: MiniCartItem[];
+    /** Quantos itens existem além dos listados (a lista traz no máximo 5). */
+    hiddenItemsCount: number;
+    count: number;
+    subtotalCents: number;
+    /** Falso para quem não pode comprar (ex.: cadastro pendente). */
+    canView: boolean;
+};

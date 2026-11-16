@@ -26,6 +26,8 @@ export type ProductCardProps = {
     stockQuantity?: number;
     /** Estado discriminado de preço do produto conforme política B2B. */
     priceState?: ProductPriceState;
+    /** O usuário logado favoritou este produto (enviado pelo backend; sempre false para visitantes). */
+    wishlisted?: boolean;
     /** Atalho opcional para definir o status sem objeto discriminado completo. */
     priceStatus?: ProductPriceVisibilityStatus;
     unitPriceCents?: number;

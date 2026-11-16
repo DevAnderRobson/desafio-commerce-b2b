@@ -20,6 +20,7 @@ import AppLogo from '@/components/app-logo';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { StoreButton } from '@/components/button';
 import { CartBadge } from '@/components/cart-badge';
+import { MiniCart } from '@/components/mini-cart';
 import { NewsletterForm } from '@/components/newsletter-form';
 import { SearchBox } from '@/components/search-box';
 import {
@@ -368,25 +369,33 @@ export function StoreLayout({
                                 </StoreButton>
                             )}
 
-                            {cartSlot ?? (
-                                <StoreButton
-                                    variant="outline"
-                                    size="touch"
-                                    asChild
-                                    className="relative px-2.5 sm:px-3.5"
-                                >
-                                    <Link href={cartHref}>
-                                        <ShoppingCart
-                                            className="size-5 shrink-0"
-                                            aria-hidden="true"
-                                        />
-                                        <span className="hidden text-sm font-medium sm:inline">
-                                            Carrinho
-                                        </span>
-                                        <CartBadge count={resolvedCartCount} />
-                                    </Link>
-                                </StoreButton>
-                            )}
+                            {cartSlot ??
+                                (user ? (
+                                    <MiniCart
+                                        cartHref={cartHref}
+                                        cartCount={resolvedCartCount}
+                                    />
+                                ) : (
+                                    <StoreButton
+                                        variant="outline"
+                                        size="touch"
+                                        asChild
+                                        className="relative px-2.5 sm:px-3.5"
+                                    >
+                                        <Link href={cartHref}>
+                                            <ShoppingCart
+                                                className="size-5 shrink-0"
+                                                aria-hidden="true"
+                                            />
+                                            <span className="hidden text-sm font-medium sm:inline">
+                                                Carrinho
+                                            </span>
+                                            <CartBadge
+                                                count={resolvedCartCount}
+                                            />
+                                        </Link>
+                                    </StoreButton>
+                                ))}
                         </div>
                     </div>
 

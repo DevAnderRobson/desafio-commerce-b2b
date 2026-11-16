@@ -2,8 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Cart\CartPresenter;
 use App\Cart\CartService;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -43,6 +45,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'company' => $this->company($request),
+            'miniCart' => Inertia::optional(fn (): ?array => $request->user() === null ? null : app(CartPresenter::class)->mini($request->user())),
             'cart' => fn (): array => ['count' => $request->user() === null ? 0 : app(CartService::class)->unitCount($request->user())],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

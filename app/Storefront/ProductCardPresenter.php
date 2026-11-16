@@ -5,6 +5,7 @@ namespace App\Storefront;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\WishlistItem;
 use App\Pricing\PriceAvailability;
 use App\Pricing\PriceQuote;
 use App\Pricing\PriceResolver;
@@ -26,9 +27,18 @@ class ProductCardPresenter
     {
         $customer = $user?->customer;
         $quotes = $this->prices->resolveMany($customer, $products);
+        $wishlisted = $user === null ? [] : WishlistItem::query()
+            ->where('user_id', $user->id)
+            ->whereIn('product_id', $products->pluck('id'))
+            ->pluck('product_id')
+            ->flip()
+            ->all();
 
         return array_values($products
-            ->map(fn (Product $product): array => $this->present($product, $user, $customer, $quotes[$product->id]))
+            ->map(fn (Product $product): array => [
+                ...$this->present($product, $user, $customer, $quotes[$product->id]),
+                'wishlisted' => isset($wishlisted[$product->id]),
+            ])
             ->all());
     }
 

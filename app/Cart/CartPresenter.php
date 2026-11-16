@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Gate;
  */
 class CartPresenter
 {
+    private const MINI_CART_ITEMS = 5;
+
     public function __construct(
         private CartTotals $totals,
         private PriceResolver $prices,
@@ -48,6 +50,47 @@ class CartPresenter
             ],
             'canProceed' => ! $summary->isEmpty() && $blockers === [],
             'blockers' => $blockers,
+        ];
+    }
+
+    /**
+     * Compact cart for the navbar popover (contract: MiniCartData in resources/js/types/cart.ts).
+     * Unlike `present`, it does not touch the "last seen" markers.
+     *
+     * @return array<string, mixed>
+     */
+    public function mini(User $user): array
+    {
+        $customer = $user->customer;
+
+        if ($customer === null || ! $customer->isApproved()) {
+            return ['items' => [], 'hiddenItemsCount' => 0, 'count' => 0, 'subtotalCents' => 0, 'canView' => false];
+        }
+
+        $summary = $this->totals->summarize($user);
+        $shown = array_slice($summary->lines, 0, self::MINI_CART_ITEMS);
+
+        return [
+            'items' => array_map(function (CartLine $line): array {
+                $product = $line->item->product;
+                $image = $product->images->first();
+
+                return [
+                    'id' => $line->item->id,
+                    'name' => $product->name,
+                    'href' => '/produtos/'.$product->slug,
+                    'imageUrl' => $image !== null ? asset($image->path) : null,
+                    'imageAlt' => $image !== null ? $image->alt : $product->name,
+                    'quantity' => $line->item->quantity,
+                    'unitPriceCents' => $line->quote->unitPriceCents,
+                    'lineTotalCents' => $line->totalCents(),
+                    'hasIssue' => ! $line->isValid(),
+                ];
+            }, $shown),
+            'hiddenItemsCount' => max(0, count($summary->lines) - count($shown)),
+            'count' => $summary->unitCount(),
+            'subtotalCents' => $summary->subtotalCents,
+            'canView' => true,
         ];
     }
 

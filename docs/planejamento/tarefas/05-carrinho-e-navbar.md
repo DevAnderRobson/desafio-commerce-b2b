@@ -22,7 +22,7 @@ Carrinho persistente **por usuário** e navbar com contador animado em tempo rea
 - [x] Ícone do carrinho com badge de **quantidade de itens**, compartilhado via props Inertia globais.
 - [x] Atualização imediata (otimista) ao adicionar, com animação curta no badge (escala/"pop" de ~200 ms) e confirmação do servidor reconciliando o número.
 - [x] `aria-live="polite"` anunciando "N itens no carrinho"; `prefers-reduced-motion` troca a animação por mudança instantânea.
-- [ ] Opcional: mini carrinho em popover/drawer com os itens e CTA "Ir para o carrinho".
+- [x] Opcional: mini carrinho em popover/drawer com os itens e CTA "Ir para o carrinho". _(desktop >= lg; no mobile o botão leva ao carrinho)_
 - [x] "Tempo real" entre abas/dispositivos: sincronizar ao focar a janela ou via evento/broadcast (decidir; padrão: revalidar ao focar).
 - [x] Navbar: link home, busca ([onda 3](03-busca.md)), conta, carrinho; mobile com menu e busca em overlay.
 

@@ -2,8 +2,10 @@
 
 use App\Models\Customer;
 use App\Models\Product;
+use App\Models\Stock;
 use App\Models\User;
 use App\Models\WishlistItem;
+use App\Storefront\ProductCardPresenter;
 use Inertia\Testing\AssertableInertia;
 
 it('adds a product to the wishlist of the logged user', function () {
@@ -58,4 +60,23 @@ it('requires login and refuses inactive products', function () {
     $this->actingAs(User::factory()->create())
         ->post(route('wishlist.store', Product::factory()->inactive()->create()))
         ->assertNotFound();
+});
+
+it('flags favorited products on the cards for the logged user only', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+    $favorite = Product::factory()->create(['name' => 'Favorito']);
+    Stock::factory()->for($favorite)->create(['quantity' => 5]);
+    $plain = Product::factory()->create(['name' => 'Comum']);
+    Stock::factory()->for($plain)->create(['quantity' => 5]);
+    WishlistItem::factory()->for($user)->for($favorite)->create();
+    $products = Product::query()->with(['category', 'images', 'stock'])->orderBy('id')->get();
+
+    $forUser = collect(app(ProductCardPresenter::class)->presentMany($products, $user))->pluck('wishlisted', 'name');
+    $forOther = collect(app(ProductCardPresenter::class)->presentMany($products, $other))->pluck('wishlisted', 'name');
+    $forGuest = collect(app(ProductCardPresenter::class)->presentMany($products, null))->pluck('wishlisted', 'name');
+
+    expect($forUser->all())->toBe(['Favorito' => true, 'Comum' => false])
+        ->and($forOther->all())->toBe(['Favorito' => false, 'Comum' => false])
+        ->and($forGuest->all())->toBe(['Favorito' => false, 'Comum' => false]);
 });

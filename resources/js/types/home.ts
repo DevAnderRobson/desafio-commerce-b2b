@@ -18,6 +18,7 @@ export type HomeProduct = Pick<
     | 'stockQuantity'
     | 'priceState'
     | 'showAddToCart'
+    | 'wishlisted'
 > & {
     href: string;
 };

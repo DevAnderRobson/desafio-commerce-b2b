@@ -2,6 +2,7 @@
 
 use App\Cart\CartService;
 use App\Cart\CartTotals;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Customer;
@@ -238,5 +239,48 @@ describe('page', function () {
             ->where('cart.items', [])->where('cart.canProceed', false));
 
         expect(Cart::query()->count())->toBe(0);
+    });
+});
+
+describe('mini cart', function () {
+    function miniCartProps($test): ?array
+    {
+        $version = (string) app(HandleInertiaRequests::class)->version(request());
+
+        return $test->withHeaders([
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => $version,
+            'X-Inertia-Partial-Component' => 'store/home',
+            'X-Inertia-Partial-Data' => 'miniCart',
+        ])->get(route('home'))->assertOk()->json('props.miniCart');
+    }
+
+    it('is only sent when requested', function () {
+        $user = cartBuyer(PriceTable::factory()->create());
+
+        $this->actingAs($user)->get(route('home'))->assertInertia(fn (AssertableInertia $page) => $page->missing('miniCart'));
+    });
+
+    it('lists at most five items with the number of hidden ones and the subtotal', function () {
+        $table = PriceTable::factory()->create();
+        $user = cartBuyer($table);
+        foreach (range(1, 7) as $ignored) {
+            app(CartService::class)->add($user, cartProduct($table, 1000), 2);
+        }
+
+        $mini = miniCartProps($this->actingAs($user));
+
+        expect($mini['items'])->toHaveCount(5)
+            ->and($mini['hiddenItemsCount'])->toBe(2)
+            ->and($mini['count'])->toBe(14)
+            ->and($mini['subtotalCents'])->toBe(14_000)
+            ->and($mini['canView'])->toBeTrue()
+            ->and($mini['items'][0]['lineTotalCents'])->toBe(2000);
+    });
+
+    it('hides the cart from companies that are not approved', function () {
+        $pending = User::factory()->ownerOf(Customer::factory()->pending()->create())->create();
+
+        expect(miniCartProps($this->actingAs($pending)))->toBe(['items' => [], 'hiddenItemsCount' => 0, 'count' => 0, 'subtotalCents' => 0, 'canView' => false]);
     });
 });
