@@ -21,6 +21,7 @@ void createInertiaApp({
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];
             case name.startsWith('checkout/'):
+            case name.startsWith('orders/'):
                 // As páginas do checkout renderizam o próprio CheckoutLayout (com resumo e barra
                 // inferior como props). `setLayoutProps` com elementos React recriados a cada
                 // render causava re-renderizações em loop.
