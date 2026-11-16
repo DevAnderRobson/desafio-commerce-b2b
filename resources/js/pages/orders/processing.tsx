@@ -22,9 +22,13 @@ import {
     OrderTotalsBreakdown,
 } from '@/components/checkout/order-items-summary';
 import { OrderSteps } from '@/components/checkout/order-steps';
+import { useOrderLiveUpdates } from '@/hooks/use-order-live-updates';
 import CheckoutLayout from '@/layouts/checkout-layout';
 import { formatInteger } from '@/lib/format';
 import type { OrderProcessingProps } from '@/types/order';
+
+const LIVE_RELOAD_COALESCE_MS = 400;
+const LIVE_HEARTBEAT_INTERVAL_MS = 20_000;
 
 function formatOrderDateTime(isoString: string): string {
     const parsed = new Date(isoString);
@@ -143,9 +147,10 @@ function ProcessingSidebarSummary({
  * - Renderiza `<CheckoutLayout currentStep="processing">` diretamente (sem `setLayoutProps`).
  * - Exibe mensagem clara de que o cliente pode sair da página sem prejudicar o pedido.
  * - Passos do pedido (`received` / `payment` / `confirmed`) com texto + ícone e `aria-live="polite"`.
- * - Polling progressivo com `router.reload({ only: ['order'], preserveScroll: true })` usando `polling.intervalsMs`
- *   (repetindo o último intervalo), pausando quando a aba fica oculta e parando em `order.isPaymentFinal`
- *   ou ao atingir `polling.timeoutMinutes`.
+ * - Assina `orders.{number}` via Reverb (`useOrderLiveUpdates`) e agrupa rajadas de eventos
+ *   (máx. 1 reload a cada ~400 ms, ignorando se já houver requisição em voo).
+ * - Com conexão ativa (`isLive`), mantém apenas um batimento lento de segurança (20 s);
+ *   sem conexão, usa o polling progressivo (`polling.intervalsMs`) como fallback.
  */
 export default function OrderProcessingPage({
     order,
@@ -159,7 +164,63 @@ export default function OrderProcessingPage({
     const startedAtRef = useRef<number | null>(null);
     const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const timeoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const liveReloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+        null,
+    );
+    const lastReloadAtRef = useRef(0);
     const inFlightRef = useRef(false);
+    const unmountedRef = useRef(false);
+
+    const handleLiveOrderUpdate = useCallback(() => {
+        if (unmountedRef.current || inFlightRef.current) {
+            return;
+        }
+
+        if (liveReloadTimerRef.current !== null) {
+            return;
+        }
+
+        const elapsedSinceLastReload = Date.now() - lastReloadAtRef.current;
+        const delay = Math.max(
+            LIVE_RELOAD_COALESCE_MS,
+            LIVE_RELOAD_COALESCE_MS - elapsedSinceLastReload,
+        );
+
+        liveReloadTimerRef.current = setTimeout(() => {
+            liveReloadTimerRef.current = null;
+
+            if (unmountedRef.current || inFlightRef.current) {
+                return;
+            }
+
+            inFlightRef.current = true;
+            lastReloadAtRef.current = Date.now();
+
+            router.reload({
+                only: ['order'],
+                onFinish: () => {
+                    inFlightRef.current = false;
+                },
+            });
+        }, delay);
+    }, []);
+
+    const { isLive, lastEvent } = useOrderLiveUpdates(
+        order.number,
+        handleLiveOrderUpdate,
+    );
+
+    useEffect(() => {
+        unmountedRef.current = false;
+
+        return () => {
+            unmountedRef.current = true;
+            if (liveReloadTimerRef.current !== null) {
+                clearTimeout(liveReloadTimerRef.current);
+                liveReloadTimerRef.current = null;
+            }
+        };
+    }, []);
 
     const safeIntervals = useMemo(
         () =>
@@ -182,6 +243,16 @@ export default function OrderProcessingPage({
 
         return active ? active.label : order.statusLabel;
     }, [order.statusLabel, order.steps]);
+
+    const paymentAttemptSupportText = useMemo(() => {
+        const attempts = lastEvent?.payment?.attempts ?? 0;
+
+        if (attempts <= 1) {
+            return null;
+        }
+
+        return `Tentativa ${formatInteger(attempts)} de processar o pagamento`;
+    }, [lastEvent]);
 
     useEffect(() => {
         if (order.isPaymentFinal || isTimedOut) {
@@ -242,11 +313,17 @@ export default function OrderProcessingPage({
                 return;
             }
 
-            const idx = Math.min(
-                attemptIndexRef.current,
-                safeIntervals.length - 1,
-            );
-            const delay = Math.max(250, safeIntervals[idx] ?? 3000);
+            let delay: number;
+
+            if (isLive) {
+                delay = LIVE_HEARTBEAT_INTERVAL_MS;
+            } else {
+                const idx = Math.min(
+                    attemptIndexRef.current,
+                    safeIntervals.length - 1,
+                );
+                delay = Math.max(250, safeIntervals[idx] ?? 3000);
+            }
 
             pollTimerRef.current = setTimeout(() => {
                 runPoll();
@@ -278,7 +355,11 @@ export default function OrderProcessingPage({
             }
 
             inFlightRef.current = true;
-            attemptIndexRef.current += 1;
+            lastReloadAtRef.current = Date.now();
+
+            if (!isLive) {
+                attemptIndexRef.current += 1;
+            }
 
             router.reload({
                 only: ['order'],
@@ -345,7 +426,7 @@ export default function OrderProcessingPage({
                 );
             }
         };
-    }, [isTimedOut, order.isPaymentFinal, safeIntervals, timeoutMs]);
+    }, [isLive, isTimedOut, order.isPaymentFinal, safeIntervals, timeoutMs]);
 
     const handleManualRefresh = useCallback(() => {
         if (inFlightRef.current || isManualRefreshing) {
@@ -353,6 +434,7 @@ export default function OrderProcessingPage({
         }
 
         inFlightRef.current = true;
+        lastReloadAtRef.current = Date.now();
         setIsManualRefreshing(true);
 
         router.reload({
@@ -399,7 +481,7 @@ export default function OrderProcessingPage({
                 >
                     {isTimedOut
                         ? `Pedido ${order.number}: ainda estamos processando seu pagamento. Avisaremos por e-mail quando concluir.`
-                        : `Pedido ${order.number}: ${order.statusLabel}. Etapa atual: ${currentStepLabel}.`}
+                        : `Pedido ${order.number}: ${order.statusLabel}. Etapa atual: ${currentStepLabel}.${paymentAttemptSupportText ? ` ${paymentAttemptSupportText}.` : ''}`}
                 </div>
 
                 <header className="flex flex-col gap-4 rounded-lg border border-border bg-card p-5 text-card-foreground sm:p-6">
@@ -455,13 +537,19 @@ export default function OrderProcessingPage({
                             Andamento da confirmação
                         </h2>
                         <span className="text-xs text-muted-foreground">
-                            {isTimedOut
-                                ? 'Processamento em segundo plano'
-                                : 'Atualização automática ativa'}
+                            {isLive
+                                ? 'Atualizando em tempo real'
+                                : 'Verificando periodicamente'}
                         </span>
                     </div>
 
                     <OrderSteps steps={order.steps} />
+
+                    {paymentAttemptSupportText !== null && (
+                        <p className="text-xs text-muted-foreground tabular-nums sm:text-sm">
+                            {paymentAttemptSupportText}
+                        </p>
+                    )}
                 </section>
 
                 {/* Orientação de timeout amigável quando o tempo limite estoura */}

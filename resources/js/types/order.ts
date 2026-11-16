@@ -137,3 +137,20 @@ export type OrderConfirmationProps = {
     /** Chave de idempotência para a nova tentativa (gerada pelo servidor). */
     retryIdempotencyKey: string | null;
 };
+
+/**
+ * Evento em tempo real (Reverb) no canal PRIVADO `orders.{number}`, nome `.order.updated`
+ * (o ponto inicial indica nome customizado no Echo). Só avisa que algo mudou: a tela deve
+ * recarregar `order` via HTTP (`router.reload({ only: ['order'] })`); nada sensível trafega no socket.
+ */
+export type OrderUpdatedEvent = {
+    number: string;
+    status: OrderStatusCode;
+    statusLabel: string;
+    isPaymentFinal: boolean;
+    /** Última tentativa de pagamento (null se ainda não houver). */
+    payment: {
+        status: 'pending' | 'approved' | 'refused' | 'failed';
+        attempts: number;
+    } | null;
+};

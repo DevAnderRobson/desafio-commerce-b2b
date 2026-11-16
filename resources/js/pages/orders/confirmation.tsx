@@ -28,14 +28,59 @@ import {
 import { OrderSteps } from '@/components/checkout/order-steps';
 import { PaymentTermOptions } from '@/components/checkout/payment-term-options';
 import { storeToast } from '@/components/toast';
+import { useOrderLiveUpdates } from '@/hooks/use-order-live-updates';
 import CheckoutLayout from '@/layouts/checkout-layout';
 import { formatCentsToBRL, formatInteger } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type {
     OrderConfirmationProps,
+    OrderStepState,
     OrderTracking,
     PaymentTermOption,
 } from '@/types/order';
+
+const LIVE_RELOAD_COALESCE_MS = 400;
+
+const FULFILLMENT_STATE_META: Record<
+    OrderStepState,
+    { label: string; className: string }
+> = {
+    done: {
+        label: 'Concluído',
+        className:
+            'border-success/35 bg-success-muted text-success-muted-foreground',
+    },
+    current: {
+        label: 'Em andamento',
+        className: 'border-brand/35 bg-brand-muted text-brand-muted-foreground',
+    },
+    pending: {
+        label: 'Aguardando',
+        className: 'border-border bg-muted text-muted-foreground',
+    },
+    failed: {
+        label: 'Não concluído',
+        className: 'border-destructive/40 bg-destructive/10 text-destructive',
+    },
+};
+
+function resolvePostPaymentStates(status: OrderTracking['status']): {
+    email: OrderStepState;
+    picking: OrderStepState;
+    shipping: OrderStepState;
+} {
+    switch (status) {
+        case 'delivered':
+            return { email: 'done', picking: 'done', shipping: 'done' };
+        case 'shipped':
+            return { email: 'done', picking: 'done', shipping: 'current' };
+        case 'picking':
+            return { email: 'done', picking: 'current', shipping: 'pending' };
+        case 'paid':
+        default:
+            return { email: 'done', picking: 'pending', shipping: 'pending' };
+    }
+}
 
 function formatOrderDateTime(isoString: string): string {
     const parsed = new Date(isoString);
@@ -101,15 +146,26 @@ type OutcomeMeta = {
 
 function getOutcomeMeta(order: OrderTracking): OutcomeMeta {
     switch (order.outcome) {
-        case 'paid':
+        case 'paid': {
+            let subtitle = `Recebemos a confirmação do pagamento via ${order.paymentTerm.label}. Seu pedido já seguiu para separação e faturamento.`;
+
+            if (order.status === 'picking') {
+                subtitle = `Pagamento confirmado via ${order.paymentTerm.label}. Os itens do pedido #${order.number} estão em separação no centro de distribuição.`;
+            } else if (order.status === 'shipped') {
+                subtitle = `Pagamento confirmado via ${order.paymentTerm.label}. O pedido #${order.number} já foi expedido e está em transporte.`;
+            } else if (order.status === 'delivered') {
+                subtitle = `O pedido #${order.number} foi entregue no endereço cadastrado.`;
+            }
+
             return {
                 title: `Pagamento aprovado — pedido #${order.number} confirmado`,
-                subtitle: `Recebemos a confirmação do pagamento via ${order.paymentTerm.label}. Seu pedido já seguiu para separação e faturamento.`,
+                subtitle,
                 badgeLabel: order.statusLabel || 'Pago',
                 badgeClassName:
                     'border-success/35 bg-success-muted text-success-muted-foreground',
                 headerBorderClassName: 'border-border',
             };
+        }
         case 'refused':
             return {
                 title: `Pagamento recusado no pedido #${order.number}`,
@@ -493,6 +549,8 @@ function MobileRetryBottomBar({
  * - Trata todos os desfechos (`paid`, `refused`, `failed`, `expired`, `processing`, `cancelled`).
  * - Quando `canRetryPayment` for verdadeiro em `refused`/`failed`/`expired`, permite escolher outra
  *   condição de pagamento dentre `order.retryTerms` e enviar `POST routes.retry` com `retryIdempotencyKey`.
+ * - Assina `orders.{number}` via Reverb (`useOrderLiveUpdates`, sem polling) e agrupa rajadas de eventos
+ *   (máx. 1 reload a cada ~400 ms, ignorando se já houver requisição em voo).
  */
 export default function OrderConfirmationPage({
     order,
@@ -502,6 +560,68 @@ export default function OrderConfirmationPage({
     const page = usePage<{ errors?: Record<string, string | undefined> }>();
     const headingRef = useRef<HTMLHeadingElement>(null);
     const isRetryingRef = useRef(false);
+    const inFlightReloadRef = useRef(false);
+    const liveReloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+        null,
+    );
+    const lastReloadAtRef = useRef(0);
+    const unmountedRef = useRef(false);
+
+    const handleLiveOrderUpdate = useCallback(() => {
+        if (
+            unmountedRef.current ||
+            inFlightReloadRef.current ||
+            isRetryingRef.current
+        ) {
+            return;
+        }
+
+        if (liveReloadTimerRef.current !== null) {
+            return;
+        }
+
+        const elapsedSinceLastReload = Date.now() - lastReloadAtRef.current;
+        const delay = Math.max(
+            LIVE_RELOAD_COALESCE_MS,
+            LIVE_RELOAD_COALESCE_MS - elapsedSinceLastReload,
+        );
+
+        liveReloadTimerRef.current = setTimeout(() => {
+            liveReloadTimerRef.current = null;
+
+            if (
+                unmountedRef.current ||
+                inFlightReloadRef.current ||
+                isRetryingRef.current
+            ) {
+                return;
+            }
+
+            inFlightReloadRef.current = true;
+            lastReloadAtRef.current = Date.now();
+
+            router.reload({
+                only: ['order'],
+                onFinish: () => {
+                    inFlightReloadRef.current = false;
+                },
+            });
+        }, delay);
+    }, []);
+
+    useOrderLiveUpdates(order.number, handleLiveOrderUpdate);
+
+    useEffect(() => {
+        unmountedRef.current = false;
+
+        return () => {
+            unmountedRef.current = true;
+            if (liveReloadTimerRef.current !== null) {
+                clearTimeout(liveReloadTimerRef.current);
+                liveReloadTimerRef.current = null;
+            }
+        };
+    }, []);
 
     const isUnfinishedPaymentOutcome =
         order.outcome === 'refused' ||
@@ -569,6 +689,10 @@ export default function OrderConfirmationPage({
     );
 
     const outcomeMeta = useMemo(() => getOutcomeMeta(order), [order]);
+    const postPaymentStates = useMemo(
+        () => resolvePostPaymentStates(order.status),
+        [order.status],
+    );
     const formattedCreatedAt = useMemo(
         () => formatOrderDateTime(order.createdAt),
         [order.createdAt],
@@ -705,7 +829,8 @@ export default function OrderConfirmationPage({
                     aria-atomic="true"
                     className="sr-only"
                 >
-                    {outcomeMeta.title}. {outcomeMeta.subtitle}
+                    {outcomeMeta.title}. Status atual: {outcomeMeta.badgeLabel}.{' '}
+                    {outcomeMeta.subtitle}
                 </div>
 
                 <header
@@ -789,9 +914,25 @@ export default function OrderConfirmationPage({
 
                         <ol className="flex flex-col divide-y divide-border/70 text-sm">
                             <li className="flex flex-col gap-1 py-3 first:pt-0">
-                                <span className="font-semibold text-foreground">
-                                    1. Confirmação enviada por e-mail
-                                </span>
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="font-semibold text-foreground">
+                                        1. Confirmação enviada por e-mail
+                                    </span>
+                                    <span
+                                        className={cn(
+                                            'inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold',
+                                            FULFILLMENT_STATE_META[
+                                                postPaymentStates.email
+                                            ].className,
+                                        )}
+                                    >
+                                        {
+                                            FULFILLMENT_STATE_META[
+                                                postPaymentStates.email
+                                            ].label
+                                        }
+                                    </span>
+                                </div>
                                 <span className="text-muted-foreground">
                                     Enviamos o comprovante do pedido #
                                     {order.number} e os detalhes da condição{' '}
@@ -800,9 +941,25 @@ export default function OrderConfirmationPage({
                                 </span>
                             </li>
                             <li className="flex flex-col gap-1 py-3">
-                                <span className="font-semibold text-foreground">
-                                    2. Separação de estoque e faturamento
-                                </span>
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="font-semibold text-foreground">
+                                        2. Separação de estoque e faturamento
+                                    </span>
+                                    <span
+                                        className={cn(
+                                            'inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold',
+                                            FULFILLMENT_STATE_META[
+                                                postPaymentStates.picking
+                                            ].className,
+                                        )}
+                                    >
+                                        {
+                                            FULFILLMENT_STATE_META[
+                                                postPaymentStates.picking
+                                            ].label
+                                        }
+                                    </span>
+                                </div>
                                 <span className="text-muted-foreground">
                                     Os itens reservados entram em separação no
                                     centro de distribuição para emissão da nota
@@ -810,9 +967,25 @@ export default function OrderConfirmationPage({
                                 </span>
                             </li>
                             <li className="flex flex-col gap-1 py-3 last:pb-0">
-                                <span className="font-semibold text-foreground">
-                                    3. Expedição e acompanhamento
-                                </span>
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="font-semibold text-foreground">
+                                        3. Expedição e acompanhamento
+                                    </span>
+                                    <span
+                                        className={cn(
+                                            'inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold',
+                                            FULFILLMENT_STATE_META[
+                                                postPaymentStates.shipping
+                                            ].className,
+                                        )}
+                                    >
+                                        {
+                                            FULFILLMENT_STATE_META[
+                                                postPaymentStates.shipping
+                                            ].label
+                                        }
+                                    </span>
+                                </div>
                                 <span className="text-muted-foreground">
                                     Assim que a carga for despachada, o
                                     andamento da entrega poderá ser consultado
