@@ -24,7 +24,6 @@ import {
     type ChangeEvent,
     type KeyboardEvent,
 } from 'react';
-import { Breadcrumbs } from '@/components/breadcrumbs';
 import { StoreButton } from '@/components/button';
 import { EmptyState } from '@/components/empty-state';
 import InputError from '@/components/input-error';
@@ -43,8 +42,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatCentsToBRL, formatInteger } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { home } from '@/routes';
-import type { BreadcrumbItem } from '@/types';
 import type {
     CartBlocker,
     CartItemData,
@@ -957,17 +954,6 @@ export default function StoreCartPage({ cart, routes }: CartPageProps) {
                 },
             });
     }, [isClearing, routes.clear]);
-
-    const breadcrumbs: BreadcrumbItem[] = [
-        {
-            title: 'Início',
-            href: home(),
-        },
-        {
-            title: 'Carrinho',
-            href: '/carrinho',
-        },
-    ];
 
     const isEmpty = cart.items.length === 0;
     const disabledProceedExplanation =
