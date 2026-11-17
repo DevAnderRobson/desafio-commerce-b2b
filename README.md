@@ -293,6 +293,8 @@ docs/
 
 Os fluxos de mensageria (pagamento assíncrono, eventos de integração, rastreamento e resiliência) estão explicados com **animações** em [`docs/mensageria`](docs/mensageria/README.md).
 
+O porquê de o dinheiro ser guardado em **centavos inteiros** (e de os números ficarem tão grandes), com vantagens e desvantagens, está explicado com imagens ilustrativas em [`docs/dinheiro-em-centavos`](docs/dinheiro-em-centavos/README.md).
+
 Decisões principais (a lista completa, com justificativas, está em [`docs/planejamento/03-decisoes-e-pendencias.md`](docs/planejamento/03-decisoes-e-pendencias.md)):
 
 - **PostgreSQL em tudo, inclusive no CI**, para a busca e os índices parciais.
