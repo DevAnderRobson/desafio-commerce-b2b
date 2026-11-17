@@ -101,7 +101,7 @@
         ],
         "dev-sail": [
             "sail up -d",
-            "sail npx concurrently -c \"#93c5fd,#c4b5fd,#34d399,#fb7185\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"php artisan reverb:start\" \"yarn dev\" --names=\"queue,logs,reverb,vite\""
+            "sail npx concurrently -c \"#93c5fd,#c4b5fd,#34d399,#fb7185,#fdba74\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"php artisan reverb:start\" \"php artisan schedule:work\" \"npm run dev\" --names=\"queue,logs,reverb,schedule,vite\""
         ]
     },
     "extra": {
