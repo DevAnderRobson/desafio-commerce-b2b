@@ -70,7 +70,13 @@ export type OrderStatusCode =
 export type OrderStepState = 'done' | 'current' | 'pending' | 'failed';
 
 export type OrderStep = {
-    key: 'received' | 'payment' | 'confirmed';
+    key:
+        | 'received'
+        | 'payment'
+        | 'confirmed'
+        | 'picking'
+        | 'shipped'
+        | 'delivered';
     label: string;
     state: OrderStepState;
 };
@@ -103,7 +109,13 @@ export type OrderTracking = {
         | 'cep'
     >;
     paymentTerm: { code: string; label: string };
+    /**
+     * Linha do tempo completa: recebido → pagamento → confirmado → em separação → enviado (em
+     * transporte) → entregue. As telas de pagamento/processamento usam só os 3 primeiros (`slice(0, 3)`).
+     */
     steps: OrderStep[];
+    /** Rastreamento da entrega (simulado). null enquanto o pedido não foi enviado. */
+    shipment: OrderShipment | null;
     /** Pagamento recusado/falhou/expirou: pode tentar outra condição sem refazer o pedido. */
     canRetryPayment: boolean;
     /** Condições disponíveis para uma nova tentativa (com total recalculado). */
@@ -153,4 +165,24 @@ export type OrderUpdatedEvent = {
         status: 'pending' | 'approved' | 'refused' | 'failed';
         attempts: number;
     } | null;
+};
+
+export type ShipmentEvent = {
+    id: number;
+    code: 'posted' | 'in_transit' | 'at_hub' | 'out_for_delivery' | 'delivered';
+    /** Ex.: "Objeto postado", "Em trânsito", "Saiu para entrega", "Entregue". */
+    title: string;
+    description: string;
+    /** "Curitiba/PR". */
+    location: string;
+    occurredAt: string;
+};
+
+export type OrderShipment = {
+    trackingCode: string;
+    carrier: string;
+    /** Mais recente primeiro. */
+    events: ShipmentEvent[];
+    /** Sinaliza a entrega concluída (último evento `delivered`). */
+    isDelivered: boolean;
 };

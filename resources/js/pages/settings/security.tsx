@@ -1,14 +1,17 @@
 import { Form, Head } from '@inertiajs/react';
 import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
+import { StoreButton } from '@/components/button';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
-import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { edit } from '@/routes/security';
 import type { Props as ManageTwoFactorProps } from '@/components/manage-two-factor';
 import ManageTwoFactor from '@/components/manage-two-factor';
+import PasswordInput from '@/components/password-input';
+import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
+import { dashboard } from '@/routes/account';
+import { edit as editProfile } from '@/routes/profile';
+import { edit } from '@/routes/security';
 
 // oxfmt-ignore
 type Props = {
@@ -22,15 +25,13 @@ export default function Security(props: Props) {
 
     return (
         <>
-            <Head title="Security settings" />
+            <Head title="Segurança - Configurações" />
 
-            <h1 className="sr-only">Security settings</h1>
-
-            <div className="space-y-6">
+            <section className="flex flex-col gap-6">
                 <Heading
                     variant="small"
-                    title="Update password"
-                    description="Ensure your account is using a long, random password to stay secure"
+                    title="Alterar senha"
+                    description="Utilize uma senha longa e exclusiva para manter o acesso à sua conta seguro."
                 />
 
                 <Form
@@ -53,88 +54,142 @@ export default function Security(props: Props) {
                             currentPasswordInput.current?.focus();
                         }
                     }}
-                    className="space-y-6"
+                    className="flex flex-col gap-5"
                 >
-                    {({ errors, processing }) => (
+                    {({ errors, processing, recentlySuccessful }) => (
                         <>
-                            <div className="grid gap-2">
+                            <div className="grid gap-1.5">
                                 <Label htmlFor="current_password">
-                                    Current password
+                                    Senha atual
                                 </Label>
 
                                 <PasswordInput
                                     id="current_password"
                                     ref={currentPasswordInput}
                                     name="current_password"
-                                    className="mt-1 block w-full"
                                     autoComplete="current-password"
-                                    placeholder="Current password"
+                                    aria-invalid={
+                                        Boolean(errors.current_password) ||
+                                        undefined
+                                    }
+                                    aria-describedby={
+                                        errors.current_password
+                                            ? 'security-current-password-error'
+                                            : undefined
+                                    }
                                 />
 
-                                <InputError message={errors.current_password} />
+                                <InputError
+                                    id="security-current-password-error"
+                                    message={errors.current_password}
+                                />
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">New password</Label>
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="password">Nova senha</Label>
 
                                 <PasswordInput
                                     id="password"
                                     ref={passwordInput}
                                     name="password"
-                                    className="mt-1 block w-full"
                                     autoComplete="new-password"
-                                    placeholder="New password"
                                     passwordrules={props.passwordRules}
+                                    aria-invalid={
+                                        Boolean(errors.password) || undefined
+                                    }
+                                    aria-describedby={
+                                        errors.password
+                                            ? 'security-new-password-error'
+                                            : undefined
+                                    }
                                 />
 
-                                <InputError message={errors.password} />
+                                <InputError
+                                    id="security-new-password-error"
+                                    message={errors.password}
+                                />
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="grid gap-1.5">
                                 <Label htmlFor="password_confirmation">
-                                    Confirm password
+                                    Confirmar nova senha
                                 </Label>
 
                                 <PasswordInput
                                     id="password_confirmation"
                                     name="password_confirmation"
-                                    className="mt-1 block w-full"
                                     autoComplete="new-password"
-                                    placeholder="Confirm password"
                                     passwordrules={props.passwordRules}
+                                    aria-invalid={
+                                        Boolean(errors.password_confirmation) ||
+                                        undefined
+                                    }
+                                    aria-describedby={
+                                        errors.password_confirmation
+                                            ? 'security-confirm-password-error'
+                                            : undefined
+                                    }
                                 />
 
                                 <InputError
+                                    id="security-confirm-password-error"
                                     message={errors.password_confirmation}
                                 />
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                <Button
+                            <div className="flex flex-wrap items-center gap-4">
+                                <StoreButton
+                                    type="submit"
                                     disabled={processing}
                                     data-test="update-password-button"
                                 >
-                                    Save
-                                </Button>
+                                    {processing && <Spinner />}
+                                    Salvar nova senha
+                                </StoreButton>
+
+                                {recentlySuccessful && (
+                                    <span
+                                        role="status"
+                                        aria-live="polite"
+                                        className="text-sm font-medium text-muted-foreground"
+                                    >
+                                        Senha atualizada.
+                                    </span>
+                                )}
                             </div>
                         </>
                     )}
                 </Form>
-            </div>
+            </section>
 
-            <ManageTwoFactor
-                canManageTwoFactor={props.canManageTwoFactor}
-                requiresConfirmation={props.requiresConfirmation}
-                twoFactorEnabled={props.twoFactorEnabled}
-            />
+            {props.canManageTwoFactor && (
+                <div className="border-t border-border pt-8">
+                    <ManageTwoFactor
+                        canManageTwoFactor={props.canManageTwoFactor}
+                        requiresConfirmation={props.requiresConfirmation}
+                        twoFactorEnabled={props.twoFactorEnabled}
+                    />
+                </div>
+            )}
         </>
     );
 }
 
 Security.layout = {
+    title: 'Configurações da conta',
+    description:
+        'Gerencie seus dados de perfil, senha, verificação em duas etapas e preferências de exibição.',
     breadcrumbs: [
         {
-            title: 'Security settings',
+            title: 'Minha conta',
+            href: dashboard(),
+        },
+        {
+            title: 'Configurações',
+            href: editProfile(),
+        },
+        {
+            title: 'Segurança e 2FA',
             href: edit(),
         },
     ],

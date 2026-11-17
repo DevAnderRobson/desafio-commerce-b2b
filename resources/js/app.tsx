@@ -1,4 +1,5 @@
 import { createInertiaApp } from '@inertiajs/react';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
@@ -24,7 +25,7 @@ void createInertiaApp({
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
-                return [AppLayout, SettingsLayout];
+                return [AccountLayout, SettingsLayout];
             case name.startsWith('checkout/'):
             case name.startsWith('orders/'):
                 // As páginas do checkout renderizam o próprio CheckoutLayout (com resumo e barra
@@ -44,6 +45,7 @@ void createInertiaApp({
         return (
             <TooltipProvider delayDuration={0}>
                 {app}
+                <ThemeToggle />
                 <Toaster />
             </TooltipProvider>
         );

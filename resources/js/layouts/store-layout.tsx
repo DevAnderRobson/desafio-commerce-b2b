@@ -1,11 +1,20 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
+    AlertTriangle,
+    Ban,
     Building2,
+    ChevronDown,
+    Clock,
     Home,
+    LayoutDashboard,
+    LogOut,
     Menu,
+    PackageCheck,
     Search,
+    Settings,
     ShoppingCart,
     User as UserIcon,
+    UserPlus,
     X,
 } from 'lucide-react';
 import {
@@ -24,6 +33,15 @@ import { MiniCart } from '@/components/mini-cart';
 import { NewsletterForm } from '@/components/newsletter-form';
 import { SearchBox } from '@/components/search-box';
 import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
     Sheet,
     SheetContent,
     SheetHeader,
@@ -32,9 +50,15 @@ import {
 } from '@/components/ui/sheet';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
-import { home, login } from '@/routes';
+import { home, login, logout, register } from '@/routes';
+import {
+    dashboard as accountDashboard,
+    pendingApproval,
+} from '@/routes/account';
+import { index as accountOrdersIndex } from '@/routes/account/orders';
+import { edit as editProfile } from '@/routes/profile';
 import searchRoutes from '@/routes/search';
-import type { NavItem, StoreLayoutProps, User } from '@/types';
+import type { CompanyContext, NavItem, StoreLayoutProps, User } from '@/types';
 import type { SharedCart } from '@/types/cart';
 
 const StoreLayoutContext = createContext(false);
@@ -55,6 +79,26 @@ const defaultStoreNavItems: NavItem[] = [
         icon: Search,
     },
 ];
+
+type CompanyNoticeKey = 'pending' | 'rejected' | 'blocked';
+
+const COMPANY_NOTICE_STORAGE_PREFIX = 'b2b_company_notice_dismissed_';
+
+function readDismissedCompanyNotice(key: CompanyNoticeKey): boolean {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+
+    try {
+        return (
+            window.sessionStorage.getItem(
+                `${COMPANY_NOTICE_STORAGE_PREFIX}${key}`,
+            ) === '1'
+        );
+    } catch {
+        return false;
+    }
+}
 
 /**
  * Layout principal da loja B2B (público e logado).
@@ -84,6 +128,8 @@ export function StoreLayout({
     const isInsideStoreLayout = useContext(StoreLayoutContext);
     const page = usePage();
     const user = (page.props.auth as { user?: User | null } | undefined)?.user;
+    const company =
+        (page.props.company as CompanyContext | null | undefined) ?? null;
     const sharedCart = page.props.cart as SharedCart | undefined;
     const resolvedCartCount = cartCount ?? sharedCart?.count ?? 0;
     const lastCartReloadAtRef = useRef<number>(0);
@@ -92,6 +138,13 @@ export function StoreLayout({
     const resolvedSearchQuery = searchQuery ?? pageSearchQuery;
     const { isCurrentUrl } = useCurrentUrl();
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+    const [dismissedNotices, setDismissedNotices] = useState<
+        Record<CompanyNoticeKey, boolean>
+    >(() => ({
+        pending: readDismissedCompanyNotice('pending'),
+        rejected: readDismissedCompanyNotice('rejected'),
+        blocked: readDismissedCompanyNotice('blocked'),
+    }));
     const searchInputId = useId();
     const mobileSearchInputId = useId();
 
@@ -139,7 +192,40 @@ export function StoreLayout({
         return <>{children}</>;
     }
 
-    const resolvedAccountHref = accountHref ?? (user ? '/conta' : login());
+    const resolvedAccountHref =
+        accountHref ?? (user ? accountDashboard() : login());
+
+    const handleLogout = () => {
+        router.flushAll();
+    };
+
+    const activeCompanyNoticeKey: CompanyNoticeKey | null =
+        user && company
+            ? company.is_blocked
+                ? 'blocked'
+                : company.approval_status === 'rejected'
+                  ? 'rejected'
+                  : company.approval_status === 'pending'
+                    ? 'pending'
+                    : null
+            : null;
+
+    const showCompanyNotice =
+        activeCompanyNoticeKey !== null &&
+        !dismissedNotices[activeCompanyNoticeKey];
+
+    const handleDismissCompanyNotice = (key: CompanyNoticeKey) => {
+        try {
+            window.sessionStorage.setItem(
+                `${COMPANY_NOTICE_STORAGE_PREFIX}${key}`,
+                '1',
+            );
+        } catch {
+            // Ignora falha de sessionStorage em modo privado restrito
+        }
+
+        setDismissedNotices((prev) => ({ ...prev, [key]: true }));
+    };
 
     return (
         <StoreLayoutContext.Provider value={true}>
@@ -147,12 +233,130 @@ export function StoreLayout({
                 {/* Skip link acessível para navegação por teclado e D-pad/TV */}
                 <a
                     href="#main-content"
-                    className="focus: sr-only inline-flex focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:min-h-11 focus:items-center focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground focus:shadow-lg focus:ring-2 focus:ring-ring focus:outline-none"
+                    className="sr-only inline-flex focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:min-h-11 focus:items-center focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground focus:shadow-lg focus:ring-2 focus:ring-ring focus:outline-none"
                 >
                     Pular para o conteúdo principal
                 </a>
 
                 <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 pt-safe backdrop-blur-xs supports-[backdrop-filter]:bg-background/90">
+                    {/* Faixa de aviso cadastral (pendente, recusado ou compra bloqueada) */}
+                    {showCompanyNotice && activeCompanyNoticeKey && (
+                        <div
+                            role={
+                                activeCompanyNoticeKey === 'pending'
+                                    ? 'status'
+                                    : 'alert'
+                            }
+                            aria-live="polite"
+                            data-test={`company-status-banner-${activeCompanyNoticeKey}`}
+                            className={cn(
+                                'border-b px-safe',
+                                activeCompanyNoticeKey === 'pending'
+                                    ? 'border-warning/35 bg-warning-muted/80 text-foreground'
+                                    : 'border-destructive/35 bg-destructive/10 text-foreground',
+                            )}
+                        >
+                            <div className="store-container flex items-center justify-between gap-3 py-1.5 text-xs sm:text-sm">
+                                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+                                    {activeCompanyNoticeKey === 'blocked' ? (
+                                        <Ban
+                                            className="size-4 shrink-0 text-destructive"
+                                            aria-hidden="true"
+                                        />
+                                    ) : activeCompanyNoticeKey ===
+                                      'rejected' ? (
+                                        <AlertTriangle
+                                            className="size-4 shrink-0 text-destructive"
+                                            aria-hidden="true"
+                                        />
+                                    ) : (
+                                        <Clock
+                                            className="size-4 shrink-0 text-warning-muted-foreground"
+                                            aria-hidden="true"
+                                        />
+                                    )}
+
+                                    <p className="leading-snug text-foreground">
+                                        {activeCompanyNoticeKey ===
+                                            'pending' && (
+                                            <>
+                                                <strong className="font-semibold">
+                                                    Cadastro em análise:{' '}
+                                                </strong>
+                                                <span>
+                                                    Seu cadastro está em
+                                                    análise. Você já pode
+                                                    navegar; preços e compra
+                                                    serão liberados após a
+                                                    aprovação.
+                                                </span>
+                                            </>
+                                        )}
+                                        {activeCompanyNoticeKey ===
+                                            'rejected' && (
+                                            <>
+                                                <strong className="font-semibold">
+                                                    Cadastro recusado:{' '}
+                                                </strong>
+                                                <span>
+                                                    O cadastro comercial da sua
+                                                    empresa não foi aprovado.
+                                                    Consulte o e-mail enviado
+                                                    para mais detalhes.
+                                                </span>
+                                            </>
+                                        )}
+                                        {activeCompanyNoticeKey ===
+                                            'blocked' && (
+                                            <>
+                                                <strong className="font-semibold">
+                                                    Compra bloqueada:{' '}
+                                                </strong>
+                                                <span>
+                                                    Sua empresa está
+                                                    temporariamente impedida de
+                                                    fechar novos pedidos. Entre
+                                                    em contato com a loja para
+                                                    regularizar o acesso.
+                                                </span>
+                                            </>
+                                        )}
+                                    </p>
+
+                                    {(activeCompanyNoticeKey === 'pending' ||
+                                        activeCompanyNoticeKey ===
+                                            'rejected') && (
+                                        <Link
+                                            href={pendingApproval()}
+                                            className="inline-flex min-h-11 items-center font-semibold text-foreground underline underline-offset-4 hover:text-brand-muted-foreground focus-visible:rounded-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                        >
+                                            {activeCompanyNoticeKey ===
+                                            'pending'
+                                                ? 'Acompanhar cadastro'
+                                                : 'Ver situação do cadastro'}
+                                        </Link>
+                                    )}
+                                </div>
+
+                                <StoreButton
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() =>
+                                        handleDismissCompanyNotice(
+                                            activeCompanyNoticeKey,
+                                        )
+                                    }
+                                    aria-label="Dispensar aviso sobre o cadastro nesta sessão"
+                                    data-test="dismiss-company-notice-button"
+                                    className="shrink-0"
+                                >
+                                    <X className="size-4" aria-hidden="true" />
+                                </StoreButton>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="store-container flex min-h-16 items-center justify-between gap-2 py-2 sm:gap-4">
                         {/* Esquerda: Menu mobile + Logo + Links principais desktop */}
                         <div className="flex items-center gap-1.5 sm:gap-3">
@@ -224,20 +428,88 @@ export function StoreLayout({
                                             </div>
 
                                             <div className="mt-6 flex flex-col gap-1 border-t border-border pt-4">
-                                                <Link
-                                                    href={resolvedAccountHref}
-                                                    className="flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 ease-out hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                                                >
-                                                    <UserIcon
-                                                        className="size-4 shrink-0"
-                                                        aria-hidden="true"
-                                                    />
-                                                    <span>
-                                                        {user
-                                                            ? `Minha conta (${user.name})`
-                                                            : 'Entrar na conta B2B'}
-                                                    </span>
-                                                </Link>
+                                                {user ? (
+                                                    <>
+                                                        <div className="px-3 py-1.5">
+                                                            <p className="truncate text-sm font-semibold text-foreground">
+                                                                {user.name}
+                                                            </p>
+                                                            {company?.name && (
+                                                                <p className="truncate text-xs text-muted-foreground">
+                                                                    {
+                                                                        company.name
+                                                                    }
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        <Link
+                                                            href={
+                                                                resolvedAccountHref
+                                                            }
+                                                            className="flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 ease-out hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                                        >
+                                                            <LayoutDashboard
+                                                                className="size-4 shrink-0"
+                                                                aria-hidden="true"
+                                                            />
+                                                            <span>
+                                                                Resumo da conta
+                                                            </span>
+                                                        </Link>
+                                                        <Link
+                                                            href={accountOrdersIndex()}
+                                                            className="flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 ease-out hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                                        >
+                                                            <PackageCheck
+                                                                className="size-4 shrink-0"
+                                                                aria-hidden="true"
+                                                            />
+                                                            <span>Pedidos</span>
+                                                        </Link>
+                                                        <Link
+                                                            href={editProfile()}
+                                                            className="flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 ease-out hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                                        >
+                                                            <Settings
+                                                                className="size-4 shrink-0"
+                                                                aria-hidden="true"
+                                                            />
+                                                            <span>
+                                                                Configurações
+                                                            </span>
+                                                        </Link>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Link
+                                                            href={login()}
+                                                            className="flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 ease-out hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                                        >
+                                                            <UserIcon
+                                                                className="size-4 shrink-0"
+                                                                aria-hidden="true"
+                                                            />
+                                                            <span>
+                                                                Entrar na conta
+                                                                B2B
+                                                            </span>
+                                                        </Link>
+                                                        <Link
+                                                            href={register()}
+                                                            className="flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 ease-out hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                                        >
+                                                            <UserPlus
+                                                                className="size-4 shrink-0"
+                                                                aria-hidden="true"
+                                                            />
+                                                            <span>
+                                                                Cadastrar
+                                                                empresa
+                                                            </span>
+                                                        </Link>
+                                                    </>
+                                                )}
+
                                                 <Link
                                                     href={cartHref}
                                                     className="flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 ease-out hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
@@ -257,6 +529,26 @@ export function StoreLayout({
                                                         className="ml-auto"
                                                     />
                                                 </Link>
+
+                                                {user && (
+                                                    <div className="mt-2 border-t border-border pt-2">
+                                                        <Link
+                                                            href={logout()}
+                                                            as="button"
+                                                            onClick={
+                                                                handleLogout
+                                                            }
+                                                            data-test="mobile-logout-button"
+                                                            className="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-destructive transition-colors duration-150 ease-out hover:bg-destructive/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                                        >
+                                                            <LogOut
+                                                                className="size-4 shrink-0"
+                                                                aria-hidden="true"
+                                                            />
+                                                            <span>Sair</span>
+                                                        </Link>
+                                                    </div>
+                                                )}
                                             </div>
                                         </nav>
                                     </SheetContent>
@@ -343,31 +635,148 @@ export function StoreLayout({
                                 </StoreButton>
                             </div>
 
-                            {accountSlot ?? (
-                                <StoreButton
-                                    variant="ghost"
-                                    size="touch"
-                                    asChild
-                                    className="px-2.5 sm:px-3"
-                                >
-                                    <Link
-                                        href={resolvedAccountHref}
-                                        aria-label={
-                                            user
-                                                ? `Minha conta: ${user.name}`
-                                                : 'Entrar na conta B2B'
-                                        }
-                                    >
-                                        <UserIcon
-                                            className="size-5 shrink-0"
-                                            aria-hidden="true"
-                                        />
-                                        <span className="hidden text-sm font-medium sm:inline">
-                                            {user ? 'Minha conta' : 'Entrar'}
-                                        </span>
-                                    </Link>
-                                </StoreButton>
-                            )}
+                            {accountSlot ??
+                                (user ? (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <StoreButton
+                                                type="button"
+                                                variant="ghost"
+                                                size="touch"
+                                                className="px-2.5 sm:px-3"
+                                                aria-label={`Minha conta: ${user.name}`}
+                                                data-test="store-account-menu-trigger"
+                                            >
+                                                <UserIcon
+                                                    className="size-5 shrink-0"
+                                                    aria-hidden="true"
+                                                />
+                                                <span className="hidden text-sm font-medium sm:inline">
+                                                    Minha conta
+                                                </span>
+                                                <ChevronDown
+                                                    className="hidden size-4 shrink-0 text-muted-foreground sm:inline"
+                                                    aria-hidden="true"
+                                                />
+                                            </StoreButton>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent
+                                            align="end"
+                                            className="w-64 p-1.5"
+                                        >
+                                            <DropdownMenuLabel className="px-2.5 py-2 font-normal">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="truncate text-sm font-semibold text-foreground">
+                                                        {user.name}
+                                                    </span>
+                                                    <span className="truncate text-xs text-muted-foreground">
+                                                        {user.email}
+                                                    </span>
+                                                    {company?.name && (
+                                                        <span className="mt-0.5 truncate text-xs font-medium text-muted-foreground">
+                                                            {company.name}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuGroup>
+                                                <DropdownMenuItem asChild>
+                                                    <Link
+                                                        href={
+                                                            resolvedAccountHref
+                                                        }
+                                                        className="flex min-h-11 w-full cursor-pointer items-center gap-2.5 px-2.5 py-2 text-sm font-medium"
+                                                    >
+                                                        <LayoutDashboard
+                                                            className="size-4 shrink-0"
+                                                            aria-hidden="true"
+                                                        />
+                                                        <span>
+                                                            Resumo da conta
+                                                        </span>
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem asChild>
+                                                    <Link
+                                                        href={accountOrdersIndex()}
+                                                        className="flex min-h-11 w-full cursor-pointer items-center gap-2.5 px-2.5 py-2 text-sm font-medium"
+                                                    >
+                                                        <PackageCheck
+                                                            className="size-4 shrink-0"
+                                                            aria-hidden="true"
+                                                        />
+                                                        <span>Pedidos</span>
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem asChild>
+                                                    <Link
+                                                        href={editProfile()}
+                                                        className="flex min-h-11 w-full cursor-pointer items-center gap-2.5 px-2.5 py-2 text-sm font-medium"
+                                                    >
+                                                        <Settings
+                                                            className="size-4 shrink-0"
+                                                            aria-hidden="true"
+                                                        />
+                                                        <span>
+                                                            Configurações
+                                                        </span>
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuGroup>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem asChild>
+                                                <Link
+                                                    href={logout()}
+                                                    as="button"
+                                                    onClick={handleLogout}
+                                                    data-test="logout-button"
+                                                    className="flex min-h-11 w-full cursor-pointer items-center gap-2.5 px-2.5 py-2 text-sm font-medium text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                                >
+                                                    <LogOut
+                                                        className="size-4 shrink-0 text-destructive"
+                                                        aria-hidden="true"
+                                                    />
+                                                    <span>Sair</span>
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                ) : (
+                                    <div className="flex items-center gap-1 sm:gap-1.5">
+                                        <StoreButton
+                                            variant="ghost"
+                                            size="touch"
+                                            asChild
+                                            className="px-2.5 sm:px-3"
+                                        >
+                                            <Link
+                                                href={login()}
+                                                aria-label="Entrar na conta B2B"
+                                            >
+                                                <UserIcon
+                                                    className="size-5 shrink-0"
+                                                    aria-hidden="true"
+                                                />
+                                                <span className="hidden text-sm font-medium sm:inline">
+                                                    Entrar
+                                                </span>
+                                            </Link>
+                                        </StoreButton>
+                                        <StoreButton
+                                            variant="outline"
+                                            size="touch"
+                                            asChild
+                                            className="hidden px-3 lg:inline-flex"
+                                        >
+                                            <Link href={register()}>
+                                                <span className="text-sm font-medium">
+                                                    Cadastrar
+                                                </span>
+                                            </Link>
+                                        </StoreButton>
+                                    </div>
+                                ))}
 
                             {cartSlot ??
                                 (user ? (
@@ -522,7 +931,7 @@ export function StoreLayout({
                                             </li>
                                             <li>
                                                 <Link
-                                                    href="/conta/pedidos"
+                                                    href={accountOrdersIndex()}
                                                     className="inline-flex min-h-11 items-center hover:text-foreground hover:underline focus-visible:rounded-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                                 >
                                                     Pedidos da empresa

@@ -19,6 +19,7 @@ import {
     useRef,
     useState,
 } from 'react';
+import { ShipmentTracking } from '@/components/account/shipment-tracking';
 import { StoreButton } from '@/components/button';
 import {
     OrderAddressSummary,
@@ -34,53 +35,11 @@ import { formatCentsToBRL, formatInteger } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type {
     OrderConfirmationProps,
-    OrderStepState,
     OrderTracking,
     PaymentTermOption,
 } from '@/types/order';
 
 const LIVE_RELOAD_COALESCE_MS = 400;
-
-const FULFILLMENT_STATE_META: Record<
-    OrderStepState,
-    { label: string; className: string }
-> = {
-    done: {
-        label: 'Concluído',
-        className:
-            'border-success/35 bg-success-muted text-success-muted-foreground',
-    },
-    current: {
-        label: 'Em andamento',
-        className: 'border-brand/35 bg-brand-muted text-brand-muted-foreground',
-    },
-    pending: {
-        label: 'Aguardando',
-        className: 'border-border bg-muted text-muted-foreground',
-    },
-    failed: {
-        label: 'Não concluído',
-        className: 'border-destructive/40 bg-destructive/10 text-destructive',
-    },
-};
-
-function resolvePostPaymentStates(status: OrderTracking['status']): {
-    email: OrderStepState;
-    picking: OrderStepState;
-    shipping: OrderStepState;
-} {
-    switch (status) {
-        case 'delivered':
-            return { email: 'done', picking: 'done', shipping: 'done' };
-        case 'shipped':
-            return { email: 'done', picking: 'done', shipping: 'current' };
-        case 'picking':
-            return { email: 'done', picking: 'current', shipping: 'pending' };
-        case 'paid':
-        default:
-            return { email: 'done', picking: 'pending', shipping: 'pending' };
-    }
-}
 
 function formatOrderDateTime(isoString: string): string {
     const parsed = new Date(isoString);
@@ -147,20 +106,24 @@ type OutcomeMeta = {
 function getOutcomeMeta(order: OrderTracking): OutcomeMeta {
     switch (order.outcome) {
         case 'paid': {
-            let subtitle = `Recebemos a confirmação do pagamento via ${order.paymentTerm.label}. Seu pedido já seguiu para separação e faturamento.`;
+            let title = `Pagamento aprovado — pedido #${order.number} confirmado`;
+            let subtitle = `Recebemos a confirmação do pagamento via ${order.paymentTerm.label}. Acompanhe abaixo as etapas de separação, expedição e entrega.`;
 
             if (order.status === 'picking') {
+                title = `Pedido #${order.number} — ${order.statusLabel}`;
                 subtitle = `Pagamento confirmado via ${order.paymentTerm.label}. Os itens do pedido #${order.number} estão em separação no centro de distribuição.`;
             } else if (order.status === 'shipped') {
+                title = `Pedido #${order.number} — ${order.statusLabel}`;
                 subtitle = `Pagamento confirmado via ${order.paymentTerm.label}. O pedido #${order.number} já foi expedido e está em transporte.`;
             } else if (order.status === 'delivered') {
+                title = `Pedido #${order.number} — ${order.statusLabel}`;
                 subtitle = `O pedido #${order.number} foi entregue no endereço cadastrado.`;
             }
 
             return {
-                title: `Pagamento aprovado — pedido #${order.number} confirmado`,
+                title,
                 subtitle,
-                badgeLabel: order.statusLabel || 'Pago',
+                badgeLabel: order.statusLabel,
                 badgeClassName:
                     'border-success/35 bg-success-muted text-success-muted-foreground',
                 headerBorderClassName: 'border-border',
@@ -172,7 +135,7 @@ function getOutcomeMeta(order: OrderTracking): OutcomeMeta {
                 subtitle: order.canRetryPayment
                     ? `A tentativa na condição ${order.paymentTerm.label} não foi autorizada. Os itens do seu pedido permanecem reservados para que você escolha outra condição de pagamento abaixo sem precisar refazer o pedido.`
                     : `A tentativa de pagamento na condição ${order.paymentTerm.label} não foi autorizada para este pedido.`,
-                badgeLabel: order.statusLabel || 'Pagamento recusado',
+                badgeLabel: order.statusLabel,
                 badgeClassName:
                     'border-destructive/40 bg-destructive/10 text-destructive',
                 headerBorderClassName: 'border-destructive/35',
@@ -183,7 +146,7 @@ function getOutcomeMeta(order: OrderTracking): OutcomeMeta {
                 subtitle: order.canRetryPayment
                     ? `Ocorreu uma falha técnica ao processar o pagamento via ${order.paymentTerm.label}. Escolha outra condição abaixo ou tente novamente sem refazer o pedido.`
                     : `Ocorreu uma falha definitiva ao processar o pagamento deste pedido.`,
-                badgeLabel: order.statusLabel || 'Falha no pagamento',
+                badgeLabel: order.statusLabel,
                 badgeClassName:
                     'border-destructive/40 bg-destructive/10 text-destructive',
                 headerBorderClassName: 'border-destructive/35',
@@ -194,7 +157,7 @@ function getOutcomeMeta(order: OrderTracking): OutcomeMeta {
                 subtitle: order.canRetryPayment
                     ? `O tempo limite para concluir o pagamento na condição ${order.paymentTerm.label} expirou. Selecione uma condição disponível abaixo para concluir este pedido.`
                     : `O tempo limite para pagamento deste pedido foi encerrado e as reservas foram liberadas.`,
-                badgeLabel: order.statusLabel || 'Expirado',
+                badgeLabel: order.statusLabel,
                 badgeClassName:
                     'border-warning/40 bg-warning-muted text-warning-muted-foreground',
                 headerBorderClassName: 'border-warning/40',
@@ -203,7 +166,7 @@ function getOutcomeMeta(order: OrderTracking): OutcomeMeta {
             return {
                 title: `Pagamento do pedido #${order.number} em processamento`,
                 subtitle: `A confirmação do pagamento via ${order.paymentTerm.label} ainda está em andamento. Você pode voltar ao acompanhamento em tempo real ou consultar seus pedidos.`,
-                badgeLabel: order.statusLabel || 'Em processamento',
+                badgeLabel: order.statusLabel,
                 badgeClassName:
                     'border-brand/35 bg-brand-muted text-brand-muted-foreground',
                 headerBorderClassName: 'border-border',
@@ -213,7 +176,7 @@ function getOutcomeMeta(order: OrderTracking): OutcomeMeta {
             return {
                 title: `Pedido #${order.number} cancelado`,
                 subtitle: `Este pedido foi cancelado e nenhuma cobrança será faturada para a sua empresa.`,
-                badgeLabel: order.statusLabel || 'Cancelado',
+                badgeLabel: order.statusLabel,
                 badgeClassName: 'border-border bg-muted text-muted-foreground',
                 headerBorderClassName: 'border-border',
             };
@@ -689,10 +652,11 @@ export default function OrderConfirmationPage({
     );
 
     const outcomeMeta = useMemo(() => getOutcomeMeta(order), [order]);
-    const postPaymentStates = useMemo(
-        () => resolvePostPaymentStates(order.status),
-        [order.status],
-    );
+    const showShipmentTracking =
+        order.outcome === 'paid' &&
+        (order.shipment !== null ||
+            order.status === 'shipped' ||
+            order.status === 'delivered');
     const formattedCreatedAt = useMemo(
         () => formatOrderDateTime(order.createdAt),
         [order.createdAt],
@@ -890,109 +854,51 @@ export default function OrderConfirmationPage({
                         className="flex flex-col gap-3"
                     >
                         <h2 className="text-fluid-xl font-semibold tracking-tight text-foreground">
-                            Status do processamento
+                            {order.outcome === 'paid'
+                                ? 'Acompanhamento do pedido'
+                                : 'Status do processamento'}
                         </h2>
-                        <OrderSteps steps={order.steps} />
+                        <OrderSteps
+                            steps={order.steps}
+                            maxSteps={order.outcome === 'paid' ? undefined : 3}
+                            ariaLabel={`Etapas do pedido ${order.number}`}
+                        />
                     </section>
                 )}
 
-                {/* Caso 1: Pedido pago -> Próximos passos operacionais */}
-                {order.outcome === 'paid' && (
+                {/* Caso 1A: Pedido pago com rastreamento disponível ou status enviado/entregue */}
+                {showShipmentTracking && (
+                    <ShipmentTracking
+                        key={order.number}
+                        shipment={order.shipment}
+                        status={order.status}
+                        heading="Entrega e rastreamento"
+                    />
+                )}
+
+                {/* Caso 1B: Pedido pago aguardando expedição */}
+                {order.outcome === 'paid' && !showShipmentTracking && (
                     <section
                         aria-label="Próximos passos do pedido"
-                        className="flex flex-col gap-4 rounded-lg border border-border bg-card p-5 text-card-foreground sm:p-6"
+                        className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 text-card-foreground sm:p-6"
                     >
-                        <div className="flex flex-col gap-1">
-                            <h2 className="text-fluid-xl font-semibold tracking-tight text-foreground">
-                                Próximos passos
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                                Veja o que acontece agora com o faturamento e a
-                                expedição da sua compra.
-                            </p>
-                        </div>
-
-                        <ol className="flex flex-col divide-y divide-border/70 text-sm">
-                            <li className="flex flex-col gap-1 py-3 first:pt-0">
-                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <span className="font-semibold text-foreground">
-                                        1. Confirmação enviada por e-mail
-                                    </span>
-                                    <span
-                                        className={cn(
-                                            'inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold',
-                                            FULFILLMENT_STATE_META[
-                                                postPaymentStates.email
-                                            ].className,
-                                        )}
-                                    >
-                                        {
-                                            FULFILLMENT_STATE_META[
-                                                postPaymentStates.email
-                                            ].label
-                                        }
-                                    </span>
-                                </div>
-                                <span className="text-muted-foreground">
-                                    Enviamos o comprovante do pedido #
-                                    {order.number} e os detalhes da condição{' '}
-                                    {order.paymentTerm.label} para o e-mail
-                                    cadastrado.
-                                </span>
-                            </li>
-                            <li className="flex flex-col gap-1 py-3">
-                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <span className="font-semibold text-foreground">
-                                        2. Separação de estoque e faturamento
-                                    </span>
-                                    <span
-                                        className={cn(
-                                            'inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold',
-                                            FULFILLMENT_STATE_META[
-                                                postPaymentStates.picking
-                                            ].className,
-                                        )}
-                                    >
-                                        {
-                                            FULFILLMENT_STATE_META[
-                                                postPaymentStates.picking
-                                            ].label
-                                        }
-                                    </span>
-                                </div>
-                                <span className="text-muted-foreground">
-                                    Os itens reservados entram em separação no
-                                    centro de distribuição para emissão da nota
-                                    fiscal eletrônica.
-                                </span>
-                            </li>
-                            <li className="flex flex-col gap-1 py-3 last:pb-0">
-                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <span className="font-semibold text-foreground">
-                                        3. Expedição e acompanhamento
-                                    </span>
-                                    <span
-                                        className={cn(
-                                            'inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold',
-                                            FULFILLMENT_STATE_META[
-                                                postPaymentStates.shipping
-                                            ].className,
-                                        )}
-                                    >
-                                        {
-                                            FULFILLMENT_STATE_META[
-                                                postPaymentStates.shipping
-                                            ].label
-                                        }
-                                    </span>
-                                </div>
-                                <span className="text-muted-foreground">
-                                    Assim que a carga for despachada, o
-                                    andamento da entrega poderá ser consultado
-                                    na área Meus pedidos.
-                                </span>
-                            </li>
-                        </ol>
+                        <h2 className="text-base font-semibold text-foreground sm:text-lg">
+                            Próximos passos
+                        </h2>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                            Enviamos o comprovante do pedido{' '}
+                            <strong className="font-semibold text-foreground tabular-nums">
+                                #{order.number}
+                            </strong>{' '}
+                            com os detalhes da condição{' '}
+                            <strong className="font-medium text-foreground">
+                                {order.paymentTerm.label}
+                            </strong>{' '}
+                            para o e-mail cadastrado. Assim que os itens saírem
+                            do centro de distribuição, o código de rastreio e a
+                            linha do tempo da entrega aparecerão automaticamente
+                            aqui e em Meus pedidos.
+                        </p>
                     </section>
                 )}
 

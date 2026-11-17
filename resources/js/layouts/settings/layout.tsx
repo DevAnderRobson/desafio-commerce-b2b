@@ -1,30 +1,28 @@
 import { Link } from '@inertiajs/react';
+import { ShieldCheck, SunMoon, User } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
-import Heading from '@/components/heading';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
-import { edit } from '@/routes/profile';
+import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import type { NavItem } from '@/types';
 
-const sidebarNavItems: NavItem[] = [
+const settingsNavItems: NavItem[] = [
     {
-        title: 'Profile',
-        href: edit(),
-        icon: null,
+        title: 'Perfil',
+        href: editProfile(),
+        icon: User,
     },
     {
-        title: 'Security',
+        title: 'Segurança e 2FA',
         href: editSecurity(),
-        icon: null,
+        icon: ShieldCheck,
     },
     {
-        title: 'Appearance',
+        title: 'Aparência',
         href: editAppearance(),
-        icon: null,
+        icon: SunMoon,
     },
 ];
 
@@ -32,46 +30,40 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
-        <div className="px-4 py-6">
-            <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
-            />
+        <div className="flex flex-col gap-6">
+            <nav
+                aria-label="Seções de configurações"
+                className="flex flex-wrap gap-1.5 border-b border-border pb-3"
+            >
+                {settingsNavItems.map((item) => {
+                    const active = isCurrentOrParentUrl(item.href);
 
-            <div className="flex flex-col lg:flex-row lg:space-x-12">
-                <aside className="w-full max-w-xl lg:w-48">
-                    <nav
-                        className="flex flex-col space-y-1 space-x-0"
-                        aria-label="Settings"
-                    >
-                        {sidebarNavItems.map((item, index) => (
-                            <Button
-                                key={`${toUrl(item.href)}-${index}`}
-                                size="sm"
-                                variant="ghost"
-                                asChild
-                                className={cn('w-full justify-start', {
-                                    'bg-muted': isCurrentOrParentUrl(item.href),
-                                })}
-                            >
-                                <Link href={item.href}>
-                                    {item.icon && (
-                                        <item.icon className="h-4 w-4" />
-                                    )}
-                                    {item.title}
-                                </Link>
-                            </Button>
-                        ))}
-                    </nav>
-                </aside>
+                    return (
+                        <Link
+                            key={toUrl(item.href)}
+                            href={item.href}
+                            aria-current={active ? 'page' : undefined}
+                            className={cn(
+                                'inline-flex min-h-11 items-center gap-2 rounded-md px-3.5 py-2 text-sm font-medium transition-colors duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                                active
+                                    ? 'bg-secondary font-semibold text-foreground'
+                                    : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                            )}
+                        >
+                            {item.icon && (
+                                <item.icon
+                                    className="size-4 shrink-0"
+                                    aria-hidden="true"
+                                />
+                            )}
+                            <span>{item.title}</span>
+                        </Link>
+                    );
+                })}
+            </nav>
 
-                <Separator className="my-6 lg:hidden" />
-
-                <div className="flex-1 md:max-w-2xl">
-                    <section className="max-w-xl space-y-12">
-                        {children}
-                    </section>
-                </div>
+            <div className="max-w-2xl">
+                <div className="flex flex-col gap-10">{children}</div>
             </div>
         </div>
     );

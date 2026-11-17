@@ -2,14 +2,7 @@ import { Form } from '@inertiajs/react';
 import { Eye, EyeOff, LockKeyhole, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AlertError from '@/components/alert-error';
-import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { StoreButton } from '@/components/button';
 import { regenerateRecoveryCodes } from '@/routes/two-factor';
 
 type Props = {
@@ -53,20 +46,23 @@ export default function TwoFactorRecoveryCodes({
     const RecoveryCodeIconComponent = codesAreVisible ? EyeOff : Eye;
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex gap-3">
+        <div className="w-full rounded-lg border border-border bg-card p-4 text-card-foreground sm:p-5">
+            <div className="flex flex-col gap-1">
+                <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
                     <LockKeyhole className="size-4" aria-hidden="true" />
-                    2FA recovery codes
-                </CardTitle>
-                <CardDescription>
-                    Recovery codes let you regain access if you lose your 2FA
-                    device. Store them in a secure password manager.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
+                    <span>Códigos de recuperação do 2FA</span>
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                    Os códigos de recuperação permitem acessar sua conta caso
+                    você perca o dispositivo com o autenticador. Guarde-os em um
+                    gerenciador de senhas seguro.
+                </p>
+            </div>
+
+            <div className="mt-4">
                 <div className="flex flex-col gap-3 select-none sm:flex-row sm:items-center sm:justify-between">
-                    <Button
+                    <StoreButton
+                        type="button"
                         onClick={toggleCodesVisibility}
                         className="w-fit"
                         aria-expanded={codesAreVisible}
@@ -76,8 +72,9 @@ export default function TwoFactorRecoveryCodes({
                             className="size-4"
                             aria-hidden="true"
                         />
-                        {codesAreVisible ? 'Hide' : 'View'} recovery codes
-                    </Button>
+                        {codesAreVisible ? 'Ocultar' : 'Ver'} códigos de
+                        recuperação
+                    </StoreButton>
 
                     {canRegenerateCodes && (
                         <Form
@@ -86,21 +83,22 @@ export default function TwoFactorRecoveryCodes({
                             onSuccess={fetchRecoveryCodes}
                         >
                             {({ processing }) => (
-                                <Button
+                                <StoreButton
                                     variant="secondary"
                                     type="submit"
                                     disabled={processing}
                                     aria-describedby="regenerate-warning"
                                 >
-                                    <RefreshCw /> Regenerate codes
-                                </Button>
+                                    <RefreshCw aria-hidden="true" />
+                                    Gerar novos códigos
+                                </StoreButton>
                             )}
                         </Form>
                     )}
                 </div>
                 <div
                     id="recovery-codes-section"
-                    className={`relative overflow-hidden transition-all duration-300 ${codesAreVisible ? 'h-auto opacity-100' : 'h-0 opacity-0'}`}
+                    className={`relative overflow-hidden transition-all duration-200 ${codesAreVisible ? 'h-auto opacity-100' : 'h-0 opacity-0'}`}
                     aria-hidden={!codesAreVisible}
                 >
                     <div className="mt-3 space-y-3">
@@ -112,7 +110,7 @@ export default function TwoFactorRecoveryCodes({
                                     ref={codesSectionRef}
                                     className="grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm"
                                     role="list"
-                                    aria-label="Recovery codes"
+                                    aria-label="Códigos de recuperação"
                                 >
                                     {recoveryCodesList.length ? (
                                         recoveryCodesList.map((code, index) => (
@@ -127,7 +125,7 @@ export default function TwoFactorRecoveryCodes({
                                     ) : (
                                         <div
                                             className="space-y-2"
-                                            aria-label="Loading recovery codes"
+                                            aria-label="Carregando códigos de recuperação"
                                         >
                                             {Array.from(
                                                 { length: 8 },
@@ -145,20 +143,21 @@ export default function TwoFactorRecoveryCodes({
 
                                 <div className="text-xs text-muted-foreground select-none">
                                     <p id="regenerate-warning">
-                                        Each recovery code can be used once to
-                                        access your account and will be removed
-                                        after use. If you need more, click{' '}
-                                        <span className="font-bold">
-                                            Regenerate codes
+                                        Cada código de recuperação pode ser
+                                        utilizado apenas uma vez e será removido
+                                        após o uso. Se precisar de novos, clique
+                                        em{' '}
+                                        <span className="font-semibold text-foreground">
+                                            Gerar novos códigos
                                         </span>{' '}
-                                        above.
+                                        acima.
                                     </p>
                                 </div>
                             </>
                         )}
                     </div>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }

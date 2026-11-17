@@ -1,7 +1,7 @@
-// Components
 import { Form, Head } from '@inertiajs/react';
+import { CheckCircle2 } from 'lucide-react';
+import { StoreButton } from '@/components/button';
 import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
@@ -9,29 +9,50 @@ import { send } from '@/routes/verification';
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
         <>
-            <Head title="Email verification" />
+            <Head title="Verificação de e-mail" />
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
+                <div
+                    role="status"
+                    aria-live="polite"
+                    className="mb-5 flex items-start gap-2.5 rounded-md border border-success/35 bg-success-muted p-3.5 text-sm font-medium text-success-muted-foreground"
+                >
+                    <CheckCircle2
+                        className="mt-0.5 size-4 shrink-0"
+                        aria-hidden="true"
+                    />
+                    <span>
+                        Enviamos um novo link de confirmação para o endereço de
+                        e-mail informado no cadastro.
+                    </span>
                 </div>
             )}
 
-            <Form {...send.form()} className="space-y-6 text-center">
+            <Form
+                {...send.form()}
+                disableWhileProcessing
+                className="flex flex-col gap-5 text-center"
+            >
                 {({ processing }) => (
                     <>
-                        <Button disabled={processing} variant="secondary">
-                            {processing && <Spinner />}
-                            Resend verification email
-                        </Button>
-
-                        <TextLink
-                            href={logout()}
-                            className="mx-auto block text-sm"
+                        <StoreButton
+                            type="submit"
+                            disabled={processing}
+                            variant="secondary"
+                            className="w-full"
                         >
-                            Log out
-                        </TextLink>
+                            {processing && <Spinner />}
+                            Reenviar e-mail de confirmação
+                        </StoreButton>
+
+                        <div>
+                            <TextLink
+                                href={logout()}
+                                className="inline-flex min-h-11 items-center text-sm"
+                            >
+                                Sair da conta
+                            </TextLink>
+                        </div>
                     </>
                 )}
             </Form>
@@ -40,7 +61,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
 }
 
 VerifyEmail.layout = {
-    title: 'Email verification',
+    title: 'Confirme seu endereço de e-mail',
     description:
-        'Please verify your email address by clicking on the link we just emailed to you.',
+        'Acesse o link enviado para o seu e-mail para concluir a verificação do cadastro.',
 };

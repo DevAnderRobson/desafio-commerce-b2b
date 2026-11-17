@@ -48,6 +48,11 @@ export type OrderAddressSummaryProps = {
 export type OrderStepsProps = {
     steps: OrderStep[];
     ariaLabel?: string;
+    /**
+     * Limita a quantidade de passos exibidos (ex.: `3` enquanto o pagamento não é final).
+     * Quando omitido, exibe todos os passos enviados pelo servidor.
+     */
+    maxSteps?: number;
 };
 
 export type OrderTotalsBreakdownProps = {

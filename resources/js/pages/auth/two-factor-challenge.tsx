@@ -1,14 +1,16 @@
-import { Form, Head, setLayoutProps } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
+import { StoreButton } from '@/components/button';
+import { FormField } from '@/components/form-field';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
     InputOTP,
     InputOTPGroup,
     InputOTPSlot,
 } from '@/components/ui/input-otp';
+import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import { store } from '@/routes/two-factor/login';
 
@@ -16,69 +18,54 @@ export default function TwoFactorChallenge() {
     const [showRecoveryInput, setShowRecoveryInput] = useState<boolean>(false);
     const [code, setCode] = useState<string>('');
 
-    const authConfigContent = useMemo<{
-        title: string;
-        description: string;
-        toggleText: string;
-    }>(() => {
-        if (showRecoveryInput) {
-            return {
-                title: 'Recovery code',
-                description:
-                    'Please confirm access to your account by entering one of your emergency recovery codes.',
-                toggleText: 'login using an authentication code',
-            };
-        }
-
-        return {
-            title: 'Authentication code',
-            description:
-                'Enter the authentication code provided by your authenticator application.',
-            toggleText: 'login using a recovery code',
-        };
-    }, [showRecoveryInput]);
-
-    setLayoutProps({
-        title: authConfigContent.title,
-        description: authConfigContent.description,
-    });
-
     const toggleRecoveryMode = (clearErrors: () => void): void => {
-        setShowRecoveryInput(!showRecoveryInput);
+        setShowRecoveryInput((prev) => !prev);
         clearErrors();
         setCode('');
     };
 
     return (
         <>
-            <Head title="Two-factor authentication" />
+            <Head title="Verificação em duas etapas" />
 
-            <div className="space-y-6">
+            <div className="flex flex-col gap-5">
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                    {showRecoveryInput
+                        ? 'Informe um dos códigos de recuperação de emergência gerados quando você ativou a verificação em duas etapas.'
+                        : 'Digite o código de 6 dígitos exibido no aplicativo autenticador do seu celular.'}
+                </p>
+
                 <Form
                     {...store.form()}
-                    className="space-y-4"
+                    className="flex flex-col gap-5"
                     resetOnError
                     resetOnSuccess={!showRecoveryInput}
+                    disableWhileProcessing
                 >
                     {({ errors, processing, clearErrors }) => (
                         <>
                             {showRecoveryInput ? (
-                                <>
-                                    <Input
-                                        name="recovery_code"
-                                        type="text"
-                                        placeholder="Enter recovery code"
-                                        autoFocus={showRecoveryInput}
-                                        required
-                                    />
-                                    <InputError
-                                        message={errors.recovery_code}
-                                    />
-                                </>
+                                <FormField
+                                    id="recovery_code"
+                                    label="Código de recuperação"
+                                    name="recovery_code"
+                                    type="text"
+                                    autoComplete="one-time-code"
+                                    autoFocus={showRecoveryInput}
+                                    required
+                                    error={errors.recovery_code}
+                                />
                             ) : (
-                                <div className="flex flex-col items-center justify-center space-y-3 text-center">
+                                <div className="flex flex-col items-center justify-center gap-2 text-center">
+                                    <Label
+                                        htmlFor="code"
+                                        className="text-sm font-medium text-foreground"
+                                    >
+                                        Código de autenticação (6 dígitos)
+                                    </Label>
                                     <div className="flex w-full items-center justify-center">
                                         <InputOTP
+                                            id="code"
                                             name="code"
                                             maxLength={OTP_MAX_LENGTH}
                                             value={code}
@@ -104,24 +91,27 @@ export default function TwoFactorChallenge() {
                                 </div>
                             )}
 
-                            <Button
+                            <StoreButton
                                 type="submit"
                                 className="w-full"
                                 disabled={processing}
                             >
-                                Continue
-                            </Button>
+                                {processing && <Spinner />}
+                                Validar acesso
+                            </StoreButton>
 
                             <div className="text-center text-sm text-muted-foreground">
-                                <span>or you can </span>
+                                <span>Ou você pode </span>
                                 <button
                                     type="button"
-                                    className="cursor-pointer text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+                                    className="inline-flex min-h-11 cursor-pointer items-center font-medium text-foreground underline decoration-border underline-offset-4 transition-colors duration-150 ease-out hover:decoration-current focus-visible:rounded-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                     onClick={() =>
                                         toggleRecoveryMode(clearErrors)
                                     }
                                 >
-                                    {authConfigContent.toggleText}
+                                    {showRecoveryInput
+                                        ? 'entrar com o código do aplicativo autenticador'
+                                        : 'entrar usando um código de recuperação'}
                                 </button>
                             </div>
                         </>
@@ -131,3 +121,9 @@ export default function TwoFactorChallenge() {
         </>
     );
 }
+
+TwoFactorChallenge.layout = {
+    title: 'Verificação em duas etapas',
+    description:
+        'Confirme o acesso à sua conta informando o código de segurança.',
+};

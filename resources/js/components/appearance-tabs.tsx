@@ -12,34 +12,42 @@ export default function AppearanceToggleTab({
     const { appearance, updateAppearance } = useAppearance();
 
     const tabs: { value: Appearance; icon: LucideIcon; label: string }[] = [
-        { value: 'light', icon: Sun, label: 'Light' },
-        { value: 'dark', icon: Moon, label: 'Dark' },
-        { value: 'system', icon: Monitor, label: 'System' },
+        { value: 'light', icon: Sun, label: 'Claro' },
+        { value: 'dark', icon: Moon, label: 'Escuro' },
+        { value: 'system', icon: Monitor, label: 'Sistema' },
     ];
 
     return (
         <div
+            role="group"
+            aria-label="Preferência de tema"
             className={cn(
-                'inline-flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800',
+                'inline-flex flex-wrap gap-1.5 rounded-lg border border-border bg-muted/60 p-1',
                 className,
             )}
             {...props}
         >
-            {tabs.map(({ value, icon: Icon, label }) => (
-                <button
-                    key={value}
-                    onClick={() => updateAppearance(value)}
-                    className={cn(
-                        'flex items-center rounded-md px-3.5 py-1.5 transition-colors',
-                        appearance === value
-                            ? 'bg-white shadow-xs dark:bg-neutral-700 dark:text-neutral-100'
-                            : 'text-neutral-500 hover:bg-neutral-200/60 hover:text-black dark:text-neutral-400 dark:hover:bg-neutral-700/60',
-                    )}
-                >
-                    <Icon className="-ml-1 h-4 w-4" />
-                    <span className="ml-1.5 text-sm">{label}</span>
-                </button>
-            ))}
+            {tabs.map(({ value, icon: Icon, label }) => {
+                const active = appearance === value;
+
+                return (
+                    <button
+                        key={value}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => updateAppearance(value)}
+                        className={cn(
+                            'inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                            active
+                                ? 'bg-card font-semibold text-foreground shadow-xs'
+                                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                        )}
+                    >
+                        <Icon className="size-4 shrink-0" aria-hidden="true" />
+                        <span>{label}</span>
+                    </button>
+                );
+            })}
         </div>
     );
 }

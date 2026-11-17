@@ -1,10 +1,11 @@
 import { Form } from '@inertiajs/react';
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { StoreButton } from '@/components/button';
 import Heading from '@/components/heading';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
-import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
 import { disable, enable } from '@/routes/two-factor';
 
@@ -45,30 +46,31 @@ export default function ManageTwoFactor(props: Props) {
     }
 
     return (
-        <div className="space-y-6">
+        <section className="flex flex-col gap-5">
             <Heading
                 variant="small"
-                title="Two-factor authentication"
-                description="Manage your two-factor authentication settings"
+                title="Autenticação em duas etapas (2FA)"
+                description="Proteja sua conta exigindo um código temporário do celular ao entrar."
             />
             {twoFactorEnabled ? (
-                <div className="flex flex-col items-start justify-start space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                        You will be prompted for a secure, random pin during
-                        login, which you can retrieve from the TOTP-supported
-                        application on your phone.
+                <div className="flex flex-col items-start justify-start gap-4">
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                        A verificação em duas etapas está ativada. Durante o
+                        login, solicitaremos o código de 6 dígitos gerado pelo
+                        aplicativo autenticador no seu celular.
                     </p>
 
                     <div className="relative inline">
                         <Form {...disable.form()}>
                             {({ processing }) => (
-                                <Button
+                                <StoreButton
                                     variant="destructive"
                                     type="submit"
                                     disabled={processing}
                                 >
-                                    Disable 2FA
-                                </Button>
+                                    {processing && <Spinner />}
+                                    Desativar 2FA
+                                </StoreButton>
                             )}
                         </Form>
                     </div>
@@ -80,29 +82,36 @@ export default function ManageTwoFactor(props: Props) {
                     />
                 </div>
             ) : (
-                <div className="flex flex-col items-start justify-start space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                        When you enable two-factor authentication, you will be
-                        prompted for a secure pin during login. This pin can be
-                        retrieved from a TOTP-supported application on your
-                        phone.
+                <div className="flex flex-col items-start justify-start gap-4">
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                        Ao ativar a autenticação em duas etapas, um código
+                        temporário será solicitado no login. Você pode gerar
+                        esse código em aplicativos autenticadores (como Google
+                        Authenticator, Authy ou 1Password) no seu celular.
                     </p>
 
                     <div>
                         {hasSetupData ? (
-                            <Button onClick={() => setShowSetupModal(true)}>
-                                <ShieldCheck />
-                                Continue setup
-                            </Button>
+                            <StoreButton
+                                type="button"
+                                onClick={() => setShowSetupModal(true)}
+                            >
+                                <ShieldCheck aria-hidden="true" />
+                                Continuar configuração
+                            </StoreButton>
                         ) : (
                             <Form
                                 {...enable.form()}
                                 onSuccess={() => setShowSetupModal(true)}
                             >
                                 {({ processing }) => (
-                                    <Button type="submit" disabled={processing}>
-                                        Enable 2FA
-                                    </Button>
+                                    <StoreButton
+                                        type="submit"
+                                        disabled={processing}
+                                    >
+                                        {processing && <Spinner />}
+                                        Ativar 2FA
+                                    </StoreButton>
                                 )}
                             </Form>
                         )}
@@ -121,6 +130,6 @@ export default function ManageTwoFactor(props: Props) {
                 fetchSetupData={fetchSetupData}
                 errors={errors}
             />
-        </div>
+        </section>
     );
 }

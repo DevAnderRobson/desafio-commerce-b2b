@@ -235,14 +235,16 @@ export default function OrderProcessingPage({
         [polling.timeoutMinutes],
     );
 
+    const paymentSteps = useMemo(() => order.steps.slice(0, 3), [order.steps]);
+
     const currentStepLabel = useMemo(() => {
         const active =
-            order.steps.find((step) => step.state === 'current') ??
-            order.steps.find((step) => step.state === 'failed') ??
-            order.steps[order.steps.length - 1];
+            paymentSteps.find((step) => step.state === 'current') ??
+            paymentSteps.find((step) => step.state === 'failed') ??
+            paymentSteps[paymentSteps.length - 1];
 
         return active ? active.label : order.statusLabel;
-    }, [order.statusLabel, order.steps]);
+    }, [order.statusLabel, paymentSteps]);
 
     const paymentAttemptSupportText = useMemo(() => {
         const attempts = lastEvent?.payment?.attempts ?? 0;
@@ -543,7 +545,7 @@ export default function OrderProcessingPage({
                         </span>
                     </div>
 
-                    <OrderSteps steps={order.steps} />
+                    <OrderSteps steps={order.steps} maxSteps={3} />
 
                     {paymentAttemptSupportText !== null && (
                         <p className="text-xs text-muted-foreground tabular-nums sm:text-sm">

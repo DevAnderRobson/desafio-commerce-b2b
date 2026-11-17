@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, Clock, Circle } from 'lucide-react';
+import { AlertTriangle, Check, Circle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { OrderStepState } from '@/types/order';
 import type { OrderStepsProps } from '@/types/order-ui';
@@ -58,21 +58,39 @@ function StepIcon({ state }: { state: OrderStepState }) {
 }
 
 /**
- * Passos do processamento do pedido (`received` / `payment` / `confirmed`).
- * Sempre comunica o estado com texto explícito + ícone (nunca apenas cor) e sem spinner infinito sem contexto.
+ * Linha do tempo de etapas do pedido (`received` → `payment` → `confirmed` → `picking` → `shipped` → `delivered`).
+ * - Rótulos vêm sempre do servidor (`step.label`).
+ * - Comunica cada estado com texto explícito + ícone (nunca apenas cor).
+ * - Mobile-first (vertical em 320px+, grade compacta horizontal somente onde couber sem quebrar).
+ * - Aceita `maxSteps` para exibir apenas os 3 primeiros passos enquanto o pagamento não é final.
  */
 export function OrderSteps({
     steps,
-    ariaLabel = 'Etapas de processamento do pedido',
+    ariaLabel = 'Etapas de acompanhamento do pedido',
+    maxSteps,
 }: OrderStepsProps) {
-    if (steps.length === 0) {
+    const visibleSteps =
+        typeof maxSteps === 'number' && maxSteps > 0
+            ? steps.slice(0, maxSteps)
+            : steps;
+
+    if (visibleSteps.length === 0) {
         return null;
     }
 
+    const isCompactThreeSteps = visibleSteps.length <= 3;
+
     return (
         <nav aria-label={ariaLabel}>
-            <ol className="grid grid-cols-1 divide-y divide-border rounded-lg border border-border bg-card text-card-foreground sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-                {steps.map((step, index) => {
+            <ol
+                className={cn(
+                    'grid grid-cols-1 overflow-hidden rounded-lg border border-border bg-card text-card-foreground',
+                    isCompactThreeSteps
+                        ? 'sm:grid-cols-3'
+                        : 'sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3',
+                )}
+            >
+                {visibleSteps.map((step, index) => {
                     const meta = STEP_STATE_META[step.state];
                     const isCurrent = step.state === 'current';
 
@@ -81,7 +99,7 @@ export function OrderSteps({
                             key={step.key}
                             aria-current={isCurrent ? 'step' : undefined}
                             className={cn(
-                                'flex items-start gap-3.5 p-4 sm:p-5',
+                                'flex items-start gap-3 p-3.5 outline-1 outline-border sm:gap-3.5 sm:p-4 lg:p-5',
                                 isCurrent && 'bg-brand-muted/15',
                                 step.state === 'failed' && 'bg-destructive/5',
                             )}
@@ -97,9 +115,10 @@ export function OrderSteps({
                             </span>
 
                             <div className="flex min-w-0 flex-1 flex-col gap-1">
-                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex flex-wrap items-center justify-between gap-1.5">
                                     <span className="text-xs font-medium text-muted-foreground tabular-nums">
-                                        Passo {index + 1} de {steps.length}
+                                        Passo {index + 1} de{' '}
+                                        {visibleSteps.length}
                                     </span>
                                     <span
                                         className={cn(
@@ -113,7 +132,7 @@ export function OrderSteps({
 
                                 <span
                                     className={cn(
-                                        'text-sm font-semibold sm:text-base',
+                                        'text-sm leading-snug font-semibold wrap-break-word sm:text-base',
                                         step.state === 'pending'
                                             ? 'text-muted-foreground'
                                             : 'text-foreground',

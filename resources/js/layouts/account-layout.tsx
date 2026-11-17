@@ -1,7 +1,8 @@
-import { Link } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import {
     Heart,
     LayoutDashboard,
+    LogOut,
     MapPin,
     Menu,
     PackageCheck,
@@ -20,8 +21,9 @@ import {
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { StoreLayout, useIsInsideStoreLayout } from '@/layouts/store-layout';
 import { cn, toUrl } from '@/lib/utils';
+import { logout } from '@/routes';
 import { edit as editProfile } from '@/routes/profile';
-import type { AccountLayoutProps, NavItem } from '@/types';
+import type { AccountLayoutProps, CompanyContext, NavItem } from '@/types';
 
 const AccountLayoutContext = createContext(false);
 
@@ -78,7 +80,7 @@ export function AccountLayout({
     description = 'Acompanhe pedidos da empresa, limite de crédito, endereços e usuários vinculados.',
     breadcrumbs = [],
     navItems,
-    showCompanyUsers = true,
+    showCompanyUsers,
     withStoreHeader = true,
     headerActionsSlot,
     sidebarFooterSlot,
@@ -86,13 +88,39 @@ export function AccountLayout({
 }: AccountLayoutProps) {
     const isInsideAccountLayout = useContext(AccountLayoutContext);
     const isInsideStoreLayout = useIsInsideStoreLayout();
-    const { isCurrentOrParentUrl } = useCurrentUrl();
+    const page = usePage();
+    const company =
+        (page.props.company as CompanyContext | null | undefined) ?? null;
+    const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
+    const resolvedShowCompanyUsers =
+        showCompanyUsers ?? (company ? company.is_owner : true);
     const resolvedNavItems =
-        navItems ?? getDefaultAccountNavItems(showCompanyUsers);
+        navItems ?? getDefaultAccountNavItems(resolvedShowCompanyUsers);
 
     if (isInsideAccountLayout) {
         return <>{children}</>;
     }
+
+    const resolveNavItemActive = (item: NavItem): boolean => {
+        if (item.isActive !== undefined) {
+            return item.isActive;
+        }
+
+        const itemPath = toUrl(item.href);
+        if (itemPath === '/conta') {
+            return isCurrentUrl('/conta');
+        }
+
+        if (itemPath.startsWith('/settings')) {
+            return isCurrentOrParentUrl('/settings');
+        }
+
+        return isCurrentOrParentUrl(item.href);
+    };
+
+    const handleLogout = () => {
+        router.flushAll();
+    };
 
     const content = (
         <AccountLayoutContext.Provider value={true}>
@@ -141,44 +169,59 @@ export function AccountLayout({
                                     </SheetHeader>
                                     <nav
                                         aria-label="Menu da conta mobile"
-                                        className="flex flex-1 flex-col gap-1 overflow-y-auto p-4"
+                                        className="flex flex-1 flex-col justify-between overflow-y-auto p-4"
                                     >
-                                        {resolvedNavItems.map((item) => {
-                                            const active =
-                                                item.isActive ??
-                                                isCurrentOrParentUrl(item.href);
+                                        <div className="flex flex-col gap-1">
+                                            {resolvedNavItems.map((item) => {
+                                                const active =
+                                                    resolveNavItemActive(item);
 
-                                            return (
-                                                <Link
-                                                    key={toUrl(item.href)}
-                                                    href={item.href}
-                                                    aria-current={
-                                                        active
-                                                            ? 'page'
-                                                            : undefined
-                                                    }
-                                                    className={cn(
-                                                        'flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                                                        active
-                                                            ? 'bg-secondary font-semibold text-foreground'
-                                                            : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-                                                    )}
-                                                >
-                                                    {item.icon && (
-                                                        <item.icon
-                                                            className="size-4 shrink-0"
-                                                            aria-hidden="true"
-                                                        />
-                                                    )}
-                                                    <span>{item.title}</span>
-                                                </Link>
-                                            );
-                                        })}
-                                        {sidebarFooterSlot && (
-                                            <div className="mt-4 border-t border-border pt-4">
-                                                {sidebarFooterSlot}
-                                            </div>
-                                        )}
+                                                return (
+                                                    <Link
+                                                        key={toUrl(item.href)}
+                                                        href={item.href}
+                                                        aria-current={
+                                                            active
+                                                                ? 'page'
+                                                                : undefined
+                                                        }
+                                                        className={cn(
+                                                            'flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                                                            active
+                                                                ? 'bg-secondary font-semibold text-foreground'
+                                                                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                                                        )}
+                                                    >
+                                                        {item.icon && (
+                                                            <item.icon
+                                                                className="size-4 shrink-0"
+                                                                aria-hidden="true"
+                                                            />
+                                                        )}
+                                                        <span>
+                                                            {item.title}
+                                                        </span>
+                                                    </Link>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
+                                            {sidebarFooterSlot}
+                                            <Link
+                                                href={logout()}
+                                                as="button"
+                                                onClick={handleLogout}
+                                                data-test="account-mobile-logout-button"
+                                                className="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-destructive transition-colors duration-150 ease-out hover:bg-destructive/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                            >
+                                                <LogOut
+                                                    className="size-4 shrink-0"
+                                                    aria-hidden="true"
+                                                />
+                                                <span>Sair</span>
+                                            </Link>
+                                        </div>
                                     </nav>
                                 </SheetContent>
                             </Sheet>
@@ -192,8 +235,7 @@ export function AccountLayout({
                     className="-mx-4 flex gap-1.5 overflow-x-auto border-b border-border px-4 pb-2 sm:-mx-6 sm:px-6 lg:hidden"
                 >
                     {resolvedNavItems.map((item) => {
-                        const active =
-                            item.isActive ?? isCurrentOrParentUrl(item.href);
+                        const active = resolveNavItemActive(item);
 
                         return (
                             <Link
@@ -230,9 +272,7 @@ export function AccountLayout({
                             className="flex flex-col gap-1"
                         >
                             {resolvedNavItems.map((item) => {
-                                const active =
-                                    item.isActive ??
-                                    isCurrentOrParentUrl(item.href);
+                                const active = resolveNavItemActive(item);
 
                                 return (
                                     <Link
@@ -260,11 +300,22 @@ export function AccountLayout({
                             })}
                         </nav>
 
-                        {sidebarFooterSlot && (
-                            <div className="border-t border-border pt-4">
-                                {sidebarFooterSlot}
-                            </div>
-                        )}
+                        <div className="flex flex-col gap-2 border-t border-border pt-4">
+                            {sidebarFooterSlot}
+                            <Link
+                                href={logout()}
+                                as="button"
+                                onClick={handleLogout}
+                                data-test="account-sidebar-logout-button"
+                                className="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-md px-3.5 py-2.5 text-left text-sm font-medium text-muted-foreground transition-colors duration-150 ease-out hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            >
+                                <LogOut
+                                    className="size-4 shrink-0"
+                                    aria-hidden="true"
+                                />
+                                <span>Sair</span>
+                            </Link>
+                        </div>
                     </aside>
 
                     <div className="min-w-0 flex-1">{children}</div>
