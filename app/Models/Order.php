@@ -37,12 +37,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $freight_label
  * @property array<string, string|null>|null $address_snapshot
  * @property string|null $idempotency_key
+ * @property string|null $tracking_code
+ * @property string|null $carrier
+ * @property CarbonInterface|null $shipped_at
  */
 #[Fillable([
     'number', 'customer_id', 'user_id', 'status', 'delivered_at', 'paid_at', 'payment_term_code', 'payment_term_label',
     'surcharge_percent', 'is_deferred', 'subtotal_cents', 'savings_cents', 'shipping_cents', 'surcharge_cents',
     'total_cents', 'credit_reserved_cents', 'reservation_state', 'freight_code', 'freight_label', 'address_snapshot',
-    'idempotency_key',
+    'idempotency_key', 'tracking_code', 'carrier', 'shipped_at',
 ])]
 class Order extends Model
 {
@@ -58,6 +61,7 @@ class Order extends Model
             'status' => OrderStatus::class,
             'delivered_at' => 'datetime',
             'paid_at' => 'datetime',
+            'shipped_at' => 'datetime',
             'is_deferred' => 'boolean',
             'reservation_state' => ReservationState::class,
             'address_snapshot' => 'array',
@@ -94,5 +98,13 @@ class Order extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * @return HasMany<ShipmentEvent, $this>
+     */
+    public function shipmentEvents(): HasMany
+    {
+        return $this->hasMany(ShipmentEvent::class)->orderByDesc('occurred_at')->orderByDesc('id');
     }
 }

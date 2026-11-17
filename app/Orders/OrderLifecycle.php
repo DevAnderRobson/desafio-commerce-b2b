@@ -41,6 +41,12 @@ class OrderLifecycle
 
             Log::info('Transição de pedido.', ['order' => $locked->number, 'from' => $previous->value, 'to' => $next->value]);
 
+            match ($next) {
+                OrderStatus::Shipped => app(ShipmentTracker::class)->begin($locked),
+                OrderStatus::Delivered => app(ShipmentTracker::class)->finish($locked),
+                default => null,
+            };
+
             $payment = $locked->payments()->latest('id')->first();
             OrderUpdated::dispatch($locked, $payment?->status, $payment->attempts ?? 0);
 

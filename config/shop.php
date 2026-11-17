@@ -37,6 +37,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Shipping tracking (simulated, D12)
+    |--------------------------------------------------------------------------
+    |
+    | A shipped order gets one new tracking event every `tracking_interval_minutes`, city by
+    | city, until the delivery event; only then the order becomes delivered.
+    |
+    */
+
+    'shipping' => [
+        'carrier' => 'TransLog Express',
+        'origin_city' => 'Curitiba',
+        'origin_state' => 'PR',
+        'tracking_interval_minutes' => (int) env('SHOP_TRACKING_INTERVAL', 1),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Postal code lookup
     |--------------------------------------------------------------------------
     */

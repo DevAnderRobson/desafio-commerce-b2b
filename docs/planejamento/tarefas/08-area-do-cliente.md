@@ -1,6 +1,6 @@
 # Onda 8: Área do cliente
 
-Status: 🟨 (8.A implementada, falta revisar no navegador) · **8.A** depende só da onda 1 e deve ser feita logo depois dela (o preço depende da aprovação); **8.B** depende da onda 7 (pedidos)
+Status: 🟨 (8.A e 8.B implementadas, falta revisar no navegador; inclui logout, configurações na conta e botão flutuante de tema) · **8.A** depende só da onda 1 e deve ser feita logo depois dela (o preço depende da aprovação); **8.B** depende da onda 7 (pedidos)
 
 ## Objetivo
 
@@ -10,10 +10,10 @@ Transformar as telas atuais (login, cadastro, dashboard, configurações) na ár
 
 ### 8.A Cadastro, aprovação e usuários da empresa
 
-- [ ] (parcial: só o cadastro foi refeito, em pt-BR e com dados da empresa; login, recuperação, verificação e 2FA seguem no visual antigo) Reestilizar login/cadastro/recuperação/verificação de e-mail/2FA com o `StoreLayout`, **mantendo as rotas e a lógica do Fortify** e os testes existentes verdes.
+- [x] Reestilizar login/cadastro/recuperação/verificação de e-mail/2FA com o `StoreLayout`, **mantendo as rotas e a lógica do Fortify** e os testes existentes verdes.
 - [x] Cadastro cria **empresa (CNPJ, razão social) + usuário dono** em uma transação; empresa nasce `pending`. Validar/mascarar CNPJ (dígitos verificadores).
 - [x] Ordem do fluxo (D34): cadastro → **verificação de e-mail do dono** → fila de aprovação do lojista → aprovado/recusado. Cadastro com e-mail não verificado não aparece na fila e não pode ser aprovado.
-- [ ] (página e rota `account.pending-approval` criadas; falta o aviso/atalho nas telas, que depende das próximas ondas) Tela "Aguardando aprovação": pode entrar e navegar, sem preços e sem compra; ao aprovar/recusar, e-mail ao dono.
+- [x] (faixa de aviso na loja para pendente/recusado/bloqueado, com link à tela) Tela "Aguardando aprovação": pode entrar e navegar, sem preços e sem compra; ao aprovar/recusar, e-mail ao dono.
 - [x] **CNPJ duplicado (D19):** o formulário **não revela** se o CNPJ existe; cria o cadastro pendente com a flag de duplicado; mesma resposta e tempo de resposta para CNPJ novo e existente (evita enumeração); throttle no cadastro. Ao recusar, o **lojista escolhe o e-mail (D35)**: (1) recusa padrão, genérica; ou (2) recusa orientando: "Já existe uma empresa com este CNPJ no sistema. Peça ao administrador da empresa para criar seu acesso pelo painel de usuários." Nunca citar nome da empresa nem do dono.
 - [x] Aprovação/recusa pelo lojista via `customers:approve {id} {--reject} {--template=default|duplicate-owner}` até existir o painel (onda 9); dispara os e-mails. Para cadastro com flag de duplicado, o comando pede a escolha do template (D35).
 - [x] **Painel de usuários da empresa** (só o dono, `/conta/usuarios`): **listar e criar/vincular** usuário (nome, e-mail); o novo usuário nasce aprovado e recebe e-mail de convite com link para definir a senha (D32). E-mail já em uso: mensagem genérica sem revelar de qual empresa.
@@ -22,13 +22,13 @@ Transformar as telas atuais (login, cadastro, dashboard, configurações) na ár
 
 ### 8.B Área do cliente
 
-- [ ] `AccountLayout` e `account.dashboard`: pedidos recentes, limite de crédito disponível, atalhos; ajustar `config/fortify.php` (`home`) e redirecionar `/dashboard`.
-- [ ] Pedidos **da empresa**: lista com filtro por status, detalhe, repetir pedido (preenche o carrinho do usuário respeitando preço/estoque atuais).
-- [ ] Endereços **da empresa**: CRUD (reutiliza o componente da onda 6).
-- [ ] Lista de desejos **do usuário**: listagem, mover para o carrinho, remover.
-- [ ] Configurações existentes (perfil, segurança, aparência) acessíveis pelo menu da conta.
-- [ ] Redirecionamento pós-login para a página de origem (ex.: produto/checkout).
-- [ ] Testes: isolamento entre usuários (carrinho/desejos) e entre empresas (pedidos/endereços), redirecionamentos, repetir pedido; atualizar `DashboardTest` e correlatos.
+- [x] `AccountLayout` e `account.dashboard`: pedidos recentes, limite de crédito disponível, atalhos; ajustar `config/fortify.php` (`home`) e redirecionar `/dashboard`.
+- [x] Pedidos **da empresa**: lista com filtro por status, detalhe, repetir pedido (preenche o carrinho do usuário respeitando preço/estoque atuais).
+- [x] Endereços **da empresa**: CRUD (reutiliza o componente da onda 6).
+- [x] Lista de desejos **do usuário**: listagem, mover para o carrinho, remover.
+- [x] Configurações existentes (perfil, segurança, aparência) acessíveis pelo menu da conta.
+- [x] Redirecionamento pós-login para a página de origem (ex.: produto/checkout).
+- [x] Testes: isolamento entre usuários (carrinho/desejos) e entre empresas (pedidos/endereços), redirecionamentos, repetir pedido; atualizar `DashboardTest` e correlatos.
 
 ## Pontos de atenção
 

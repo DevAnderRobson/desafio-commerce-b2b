@@ -48,7 +48,7 @@ Revisar o pedido, escolher a forma de pagamento e criar o pedido; o pagamento é
 
 ### 7.5 Ciclo pós-pagamento (simulado)
 
-- [x] Estados `paid → picking → shipped → delivered` (`delivered_at`), na classe única de estados com transições válidas.
+- [x] Estados `paid → picking → shipped → delivered` (`delivered_at`), na classe única de estados com transições válidas. _(rastreamento simulado cidade a cidade em `shipment_events`; só a entrega fecha o pedido como entregue; `orders:track` agendado)_
 - [x] Comando `orders:advance {order} {status}` (uso de demonstração) para avançar o pedido até existir a gestão da loja. Idem para o seeder demo.
 - [x] `delivered` habilita o selo "Comprou" nas avaliações; antes disso, não.
 - [x] Testes: transições válidas/inválidas e efeito no selo.

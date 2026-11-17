@@ -8,8 +8,8 @@ use App\Models\Review;
 use App\Models\Stock;
 use App\Models\User;
 use App\Pricing\PriceResolver;
+use App\Support\PersonName;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Str;
 
 /**
  * Builds the props of the product detail page. Prices go through ProductCardPresenter so the
@@ -90,7 +90,7 @@ class ProductDetailPresenter
                 'rating' => $review->rating,
                 'title' => $review->title,
                 'body' => $review->body,
-                'authorName' => $this->authorName($review->user),
+                'authorName' => PersonName::short($review->user->name),
                 'badge' => $review->verified_purchase ? 'purchased' : 'not_purchased',
                 'createdAt' => $review->created_at?->toIso8601String(),
                 'isOwn' => $user !== null && $review->user_id === $user->id,
@@ -101,13 +101,5 @@ class ProductDetailPresenter
             'nextPageUrl' => $reviews->nextPageUrl(),
             'prevPageUrl' => $reviews->previousPageUrl(),
         ];
-    }
-
-    private function authorName(User $author): string
-    {
-        $parts = preg_split('/\s+/', trim($author->name)) ?: [];
-        $first = $parts[0] ?? 'Cliente';
-
-        return count($parts) > 1 ? $first.' '.Str::upper(Str::substr(end($parts), 0, 1)).'.' : $first;
     }
 }
